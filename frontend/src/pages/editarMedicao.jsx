@@ -82,8 +82,7 @@ export default function EditarMedicao() {
         setModoMultiplo(false);
         setProdutoId(String(med.produtoId || ""));
       }
-    } catch (e) {
-      console.log(e);
+    } catch {
       setErro("Não foi possível carregar a medição para edição.");
     }
   }
@@ -96,7 +95,7 @@ export default function EditarMedicao() {
       }
       const res = await api.get(`/enderecos/cliente/${clienteIdSelecionado}`);
       setEnderecos(res.data || []);
-    } catch (e) {
+    } catch {
       setEnderecos([]);
       setErro("Não foi possível carregar os endereços deste cliente.");
     }

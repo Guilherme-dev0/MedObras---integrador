@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api";
 import "../styles/clienteForm.css";
@@ -12,11 +12,7 @@ export default function EnderecoEditar() {
   const [cep, setCep] = useState("");
   const [erro, setErro] = useState("");
 
-  useEffect(() => {
-    carregar();
-  }, []);
-
-  async function carregar() {
+  const carregar = useCallback(async () => {
     try {
       const res = await api.get("/enderecos");
       const endereco = (res.data || []).find((e) => e.id == id);
@@ -29,7 +25,11 @@ export default function EnderecoEditar() {
     } catch (err) {
       console.error("Erro ao carregar endereço:", err);
     }
-  }
+  }, [id]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
 
   function validarCep(valor) {
     const apenasNumeros = String(valor).replace(/\D/g, "");

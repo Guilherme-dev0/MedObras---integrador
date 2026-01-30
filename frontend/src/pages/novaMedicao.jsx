@@ -87,7 +87,6 @@ export default function AgendarMedicao() {
       setEnderecos([]);
       setEnderecoId("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clienteBusca, clientes]);
 
   const clienteSelecionado = useMemo(

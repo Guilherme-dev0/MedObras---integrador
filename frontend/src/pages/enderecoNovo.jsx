@@ -22,10 +22,10 @@ export default function EnderecoNovo() {
 
     try {
         console.log("Buscando no backend:", nome);
-      const res = await api.get('/clientes/search/${nome}');
+      const res = await api.get(`/clientes/search/${nome}`);
       console.log("Resultado encontrado:", res.data);
       setClientes(res.data);
-    } catch (err) {
+    } catch {
       console.log("Erro ao buscar clientes");
     }
   }
@@ -48,7 +48,7 @@ export default function EnderecoNovo() {
       alert("Endereço cadastrado com sucesso!");
       window.location.href = "/enderecos";
 
-    } catch (err) {
+    } catch {
       alert("Erro ao salvar endereço");
     }
   }
@@ -64,7 +64,7 @@ export default function EnderecoNovo() {
           type="text"
           placeholder="Digite o nome do cliente…"
           value={search}
-          onChange={(e) => buscarClientes(e.target.value)}
+          onChange={(e) => buscarClientePornome(e.target.value)}
           className="form-input"
         />
 

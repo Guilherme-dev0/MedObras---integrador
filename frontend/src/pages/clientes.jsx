@@ -15,8 +15,8 @@ export default function Clientes() {
     try {
       const res = await api.get("/clientes");
       setClientes(res.data || []);
-    } catch (err) {
-      console.error("Erro ao carregar clientes:", err);
+    } catch {
+      console.error("Erro ao carregar clientes");
     }
   }
 
@@ -27,7 +27,7 @@ export default function Clientes() {
       await api.delete(`/clientes/${id}`);
       alert("Cliente excluído com sucesso!");
       carregar();
-    } catch (err) {
+    } catch {
       alert("Erro ao excluir cliente. Verifique vínculos existentes.");
     }
   }

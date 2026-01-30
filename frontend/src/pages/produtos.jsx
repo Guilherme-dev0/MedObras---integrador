@@ -10,10 +10,6 @@ export default function Produtos() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // modal excluir
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
-
   useEffect(() => {
     carregar();
   }, []);
@@ -33,27 +29,17 @@ export default function Produtos() {
     }
   }
 
-  function abrirConfirmacao(p) {
-    setProdutoParaExcluir(p);
-    setConfirmOpen(true);
-  }
-
-  function fecharConfirmacao() {
-    setConfirmOpen(false);
-    setProdutoParaExcluir(null);
-  }
-
-  async function confirmarExclusao() {
-    if (!produtoParaExcluir) return;
-
+  async function excluirProduto(p) {
+    if (!p) return;
+    const ok = window.confirm(`Excluir produto\n\nTem certeza que deseja excluir ${p.nome}?`);
+    if (!ok) return;
     try {
-      await api.delete(`/produtos/${produtoParaExcluir.id}`);
-      fecharConfirmacao();
+      await api.delete(`/produtos/${p.id}`);
       carregar();
     } catch (err) {
       console.error(err);
       setErro("Erro ao excluir o produto.");
-      fecharConfirmacao();
+      alert("Erro ao excluir produto.");
     }
   }
 
@@ -198,7 +184,7 @@ export default function Produtos() {
                     <button
                       className="btn-delete"
                       title="Excluir"
-                      onClick={() => abrirConfirmacao(p)}
+                      onClick={() => excluirProduto(p)}
                     >
                       🗑️
                     </button>
@@ -210,29 +196,6 @@ export default function Produtos() {
         )}
       </div>
 
-      {/* MODAL CONFIRMAÇÃO */}
-      {confirmOpen && (
-        <div className="modal-overlay">
-          <div className="modal modal-sm">
-            <h3>Excluir produto</h3>
-
-            <p style={{ marginTop: 8, color: "#475569" }}>
-              Tem certeza que deseja excluir{" "}
-              <strong>{produtoParaExcluir?.nome}</strong>?
-            </p>
-
-            <div className="modal-actions" style={{ marginTop: 16 }}>
-              <button className="btn-primary" onClick={confirmarExclusao}>
-                Sim, excluir
-              </button>
-
-              <button className="btn-cancel" onClick={fecharConfirmacao}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

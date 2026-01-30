@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api";
 import "../styles/clienteForm.css";
@@ -12,11 +12,7 @@ export default function ClienteEditar() {
   const [cpfOriginal, setCpfOriginal] = useState("");
   const [erro, setErro] = useState("");
 
-  useEffect(() => {
-    carregar();
-  }, []);
-
-  async function carregar() {
+  const carregar = useCallback(async () => {
     try {
       const res = await api.get(`/clientes`);
       const cliente = res.data.find((c) => c.id == id);
@@ -33,7 +29,11 @@ export default function ClienteEditar() {
     } catch (err) {
       console.error("Erro ao carregar cliente:", err);
     }
-  }
+  }, [id]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
 
   async function salvar(e) {
     e.preventDefault();

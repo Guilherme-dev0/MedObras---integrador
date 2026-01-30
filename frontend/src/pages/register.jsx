@@ -63,8 +63,6 @@ export default function Register() {
         senha,
       });
 
-      const licencaGerada = res.data.licenca;
-
       alert(
         'Empresa cadastrada com sucesso!\n\n📌 Sua licença é: ' + res.data.licenca + '\n\nGuarde-a! Você precisará para fazer o login.'
       );
