@@ -16,8 +16,8 @@ import EnderecosListar from "./pages/enderecosListar.jsx";
 import EnderecoEditar from "./pages/enderecoEditar.jsx";
 import ProtectedRoutes from "./componentes/protectedRoutes";
 import EditarMedicao from "./pages/editarMedicao.jsx";
-import MedicoesConcluidas from "./pages/medicoesConcluidas.jsx";
-import AgendarMedicao from "./pages/agendarMedicao.jsx";
+import MedicoesConcluidas from "./pages/MedicoesConcluidas.jsx";
+import AgendarMedicao from "./pages/AgendarMedicao.jsx";
 import NovaMedicao from "./pages/novaMedicao.jsx"
 import Produtos from "./pages/produtos.jsx";
 import ProdutoNovo from "./pages/produtoNovo.jsx";
