@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db/prisma.js";
 import bcrypt from "bcrypt";
 import { gerarTokenRecuperacao, hashToken } from "../utils/token.js";
-
-const prisma = new PrismaClient();
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;

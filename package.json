@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "nodemon backend/src/server.js",
-    "start": "node backend/src/server.js"
+    "start": "node backend/src/server.js",
+    "postinstall": "npm --prefix frontend install",
+    "build": "npm --prefix frontend run build"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
