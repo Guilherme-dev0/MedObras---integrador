@@ -6,7 +6,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node scripts/seed.js",
-    "prepare": "prisma generate --schema=prisma/schema.prisma"
+    "prepare": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
