@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "nodemon backend/src/server.js",
     "start": "node backend/src/server.js",
-    "postinstall": "npm --prefix frontend install && npm --prefix backend install && npx --prefix backend prisma generate --schema=prisma/schema.prisma",
+    "postinstall": "npm --prefix frontend install && npm --prefix backend install",
     "build": "npm --prefix frontend run build"
   },
   "dependencies": {

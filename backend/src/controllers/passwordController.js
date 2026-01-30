@@ -1,5 +1,5 @@
 import prisma from "../db/prisma.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { gerarTokenRecuperacao, hashToken } from "../utils/token.js";
 
 export const forgotPassword = async (req, res) => {
