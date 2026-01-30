@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Empresa {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  cnpj      String    @unique
+  telefone  String
+  email     String    @unique
+  senha     String
+  licenca   String    @unique @db.VarChar(4)
+
+  clientes  Cliente[]
+  produtos  Produto[]
+  medicoes  Medicao[]
+
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Cliente {
+  id         Int        @id @default(autoincrement())
+  nome       String
+  telefone   String
+  cpf        String
+  observacao String?
+  empresaId  Int
+
+  empresa    Empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  enderecos  Endereco[]
+  medicoes   Medicao[]
+
+  @@unique([cpf, empresaId])
+}
+
+model Endereco {
+  id         Int      @id @default(autoincrement())
+  logradouro String
+  bairro     String
+  cidade     String
+  cep        String
+  clienteId  Int
+
+  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  medicoes   Medicao[]
+}
+
+model Produto {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  empresaId   Int
+
+  empresa     Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  medicoes    Medicao[]
+}
+
+model Medicao {
+  id           Int       @id @default(autoincrement())
+  clienteId    Int
+  empresaId    Int
+  enderecoId   Int
+  produtoId    Int?
+
+  dataAgendada DateTime
+  status       String     @default("pendente")
+  altura       Float?
+  largura      Float?
+  observacao   String?
+  descricao    String?
+
+
+  cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  endereco     Endereco  @relation(fields: [enderecoId], references: [id], onDelete: Cascade)
+
+  empresa      Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  produto      Produto?  @relation(fields: [produtoId], references: [id])
+}
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  empresaId Int
+
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}

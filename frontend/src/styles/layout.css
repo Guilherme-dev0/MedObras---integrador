@@ -1,0 +1,175 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f6fb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background: #ffffff;
+  border-right: 1px solid #e3e6f0;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.logo-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0059b3, #003a73);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.logo-text span {
+  font-size: 12px;
+  color: #8a96b2;
+}
+
+/* itens menu */
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #4b5568;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-item span:first-child {
+  width: 22px;
+  text-align: center;
+}
+
+.sidebar-item:hover {
+  background: #f0f4ff;
+  color: #0059b3;
+}
+
+.sidebar-item.active {
+  background: #0059b3;
+  color: #ffffff;
+}
+
+/* Área principal */
+.layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+.topbar {
+  height: 72px;
+  background: #ffffff;
+  border-bottom: 1px solid #e3e6f0;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar-title {
+  font-size: 20px;
+  color: #162447;
+  font-weight: 600;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.status-pill {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #e6fffa;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #e5edff;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.logout-btn {
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.logout-btn:hover {
+  background: #e5e7eb;
+}
+
+/* Conteúdo das páginas */
+.layout-content {
+  padding: 24px 32px 32px 32px;
+}

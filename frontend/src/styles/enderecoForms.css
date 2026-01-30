@@ -1,0 +1,89 @@
+.form-container {
+  max-width: 550px;
+  background: #ffffff;
+  padding: 25px;
+  margin: 30px auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  font-family: "Inter", sans-serif;
+}
+
+.form-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #1a2b49;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dce1e8;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.form-input:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 4px rgba(74, 144, 226, 0.4);
+}
+
+.form-button {
+  width: 100%;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.form-button:hover {
+  background: #3b78c4;
+}
+
+.autocomplete-box {
+  background: white;
+  border: 1px solid #dce1e8;
+  border-radius: 8px;
+  margin-top: 4px;
+  list-style: none;
+  overflow: hidden;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.autocomplete-box li {
+  padding: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.autocomplete-box li:hover {
+  background: #f2f6ff;
+}
+
+.selected-client-box {
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #eef4ff;
+  border-left: 4px solid #4a90e2;
+  border-radius: 6px;
+  color: #1a2b49;
+}

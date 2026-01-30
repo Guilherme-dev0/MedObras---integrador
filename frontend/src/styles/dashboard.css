@@ -1,0 +1,214 @@
+.dash-container {
+  max-width: 1180px;
+}
+
+.dash-title {
+  font-size: 22px;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.dash-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+/* cards superiores */
+.dash-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dash-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px 18px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash-card.primary {
+  background: radial-gradient(circle at top left, #1d4ed8, #0f172a);
+  color: #ffffff;
+}
+
+.dash-card-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.dash-card.primary .dash-card-label {
+  color: #dbeafe;
+}
+
+.dash-card-number {
+  font-size: 26px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dash-card.primary .dash-card-number {
+  color: #ffffff;
+}
+
+.dash-card-foot {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.dash-card.primary .dash-card-foot {
+  color: #bfdbfe;
+}
+
+/* grid inferior */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 2fr 2fr;
+  gap: 16px;
+}
+
+.dash-panel {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px 18px 18px;
+  border: 1px solid #e5e7eb;
+}
+
+.dash-panel-header h3 {
+  font-size: 16px;
+  color: #111827;
+}
+
+/* Atalhos */
+.shortcut-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-item {
+  border: none;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.shortcut-item.primary {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.shortcut-item.primary .shortcut-text {
+  color: #e5e7eb;
+}
+
+.shortcut-item:hover {
+  background: #eef2ff;
+  transform: translateY(-1px);
+}
+
+.shortcut-item.primary:hover {
+  background: #1e40af;
+}
+
+.shortcut-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #e0ecff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shortcut-item.primary .shortcut-icon {
+  background: #1e3a8a;
+  color: #ffffff;
+}
+
+.shortcut-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+}
+
+.shortcut-text {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Medições recentes */
+.recent-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: #f9fafb;
+}
+
+.recent-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.recent-sub {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.recent-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.badge.success {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.badge.warning {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+.recent-date {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.empty-text {
+  font-size: 13px;
+  color: #9ca3af;
+}

@@ -1,0 +1,85 @@
+/* ==== CONTAINER ==== */
+.register-container {
+  width: 100%;
+  height: 100vh;
+  background: #eef3ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ==== BOX ==== */
+.register-box {
+  background: #fff;
+  width: 410px;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.register-logo {
+  width: 90px;
+  margin-bottom: 8px;
+}
+
+.register-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1b3d8a;
+  margin-bottom: 20px;
+}
+
+/* ==== CAMPOS (AGORA MAIS BAIXOS) ==== */
+.register-field {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #1d72e0;
+  padding: 6px 10px;     /* <<< menor */
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.register-field img {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+.register-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 14px;
+  padding: 4px 0;         /* <<< menor */
+}
+
+/* ==== BOTÃO ==== */
+.register-button {
+  width: 100%;
+  background: #1d72e0;
+  color: #fff;
+  padding: 10px;          /* <<< menor */
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.register-button:hover {
+  background: #155bb3;
+}
+
+/* ==== LINKS ==== */
+.register-links {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.register-links a {
+  font-weight: bold;
+  color: #1d72e0;
+}

@@ -1,0 +1,277 @@
+/* =========================================
+   PADRÃO MEDIÇÕES CONCLUÍDAS - AGENDAR
+   (funciona com ProtectedRoutes: .layout-content)
+   ========================================= */
+
+.layout-content .mb-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 26px 26px 34px;
+}
+
+/* HEADER */
+.mb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.mb-title {
+  margin: 0;
+}
+
+.mb-pill {
+  display: inline-block;
+  margin-top: 10px;
+  background: var(--primary-dark);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  box-shadow: 0 10px 20px rgba(13, 59, 102, 0.18);
+}
+
+/* seta */
+.mb-back {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(13, 59, 102, 0.14);
+  background: #eaf2fb;
+  color: var(--primary-dark);
+  font-size: 1.4rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.mb-back:hover {
+  background: #dbeafe;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(13, 59, 102, 0.12);
+}
+
+/* cards */
+.mb-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.mb-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.mb-card-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.mb-card-value {
+  margin-top: 8px;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--primary-dark);
+}
+
+.mb-card-sub {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* form */
+.mb-form-card {
+  background: var(--bg-card);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.mb-alert {
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border: 1px solid #fecaca;
+  margin-bottom: 14px;
+}
+
+.mb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.mb-field label {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.mb-input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid #d1d5db;
+  padding: 12px 14px;
+  font-size: 0.98rem;
+  outline: none;
+  background: #f9fafb;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.mb-input:focus {
+  border-color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.12);
+}
+
+.mb-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.mb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.mb-hint {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.mb-warn {
+  color: #b45309;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+/* ações */
+.mb-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.mb-btn-primary {
+  flex: 1;
+  background: var(--secondary);
+  color: #fff;
+  padding: 0.95rem 1.4rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.98rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(248, 150, 30, 0.38);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.mb-btn-primary:hover {
+  background: var(--secondary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(248, 150, 30, 0.48);
+}
+
+.mb-btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.mb-btn-ghost {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: var(--primary-dark);
+  padding: 0.95rem 1.2rem;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.mb-btn-ghost:hover {
+  border-color: var(--primary);
+  box-shadow: 0 10px 20px rgba(13, 59, 102, 0.12);
+  transform: translateY(-1px);
+}
+
+/* responsivo */
+@media (max-width: 900px) {
+  .layout-content .mb-page {
+    padding: 18px 16px 26px;
+  }
+  .mb-cards {
+    grid-template-columns: 1fr;
+  }
+  .mb-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* ========= EDITAR MEDIÇÃO (PADRÃO MEDOBRAS) ========= */
+
+.mb-mini{
+  margin-top: 10px;
+  border: 1px solid rgba(13,59,102,.14);
+  background: #eef6ff;
+  color: var(--primary-dark);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mb-mini:hover{
+  background:#dbeafe;
+}
+
+/* lista de produtos (modo múltiplo) */
+.mb-multi{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px){
+  .mb-multi{ grid-template-columns: 1fr; }
+}
+
+.mb-check{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.08);
+  background: #f9fafb;
+  cursor:pointer;
+}
+
+.mb-check input{ transform: scale(1.1); }
+
+.mb-check.is-on{
+  background: #eef6ff;
+  border-color: rgba(13,59,102,.22);
+}

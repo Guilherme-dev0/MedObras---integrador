@@ -1,0 +1,87 @@
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background: #f3f6fb;
+  min-height: 100vh;
+}
+
+.page-title {
+  font-size: 32px;
+  margin-bottom: 30px;
+  color: #1b2a41;
+  text-align: left;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 25px;
+}
+
+/* ----- CARD ----- */
+.card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+}
+
+.card-title {
+  font-size: 22px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #1b2a41;
+}
+
+/* ----- INPUTS ----- */
+.input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid #c8d1e0;
+  transition: 0.2s;
+}
+
+.input:focus {
+  border-color: #2f5fd8;
+  box-shadow: 0 0 0 2px rgba(47, 95, 216, 0.2);
+}
+
+.textarea {
+  resize: none;
+  height: 80px;
+}
+
+/* ----- BUTTONS ----- */
+.btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-weight: 600;
+}
+
+.btn.primary {
+  background: #2f5fd8;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #234bb0;
+}
+
+.btn.secondary {
+  background: #1cba7a;
+  color: white;
+}
+
+.btn.secondary:hover {
+  background: #159964;
+}

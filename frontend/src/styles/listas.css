@@ -1,0 +1,204 @@
+/* ===========================
+   MEDOBRAS - PRODUTOS (PRO)
+   COLE NO FINAL DO listas.css
+   =========================== */
+
+.prod-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.prod-pill {
+  display: inline-block;
+  margin-top: 10px;
+  background: var(--primary-dark);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 650;
+  box-shadow: 0 10px 20px rgba(13, 59, 102, 0.16);
+}
+
+.prod-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-primary-sm {
+  padding: 0.75rem 1.15rem;
+  font-size: 0.95rem;
+}
+
+.btn-outline {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: var(--primary-dark);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-outline:hover {
+  border-color: var(--primary);
+  box-shadow: 0 10px 20px rgba(13, 59, 102, 0.12);
+  transform: translateY(-1px);
+}
+
+.prod-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 16px 0 18px;
+}
+
+.prod-stat-card {
+  background: linear-gradient(135deg, rgba(13, 59, 102, 0.08), rgba(17, 75, 130, 0.05));
+  border: 1px solid rgba(13, 59, 102, 0.12);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.prod-stat-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.prod-stat-value {
+  margin-top: 6px;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--primary-dark);
+}
+
+.prod-stat-foot {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.prod-filters {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.04);
+}
+
+.prod-search label,
+.prod-sort label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 750;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.prod-select {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid #d1d5db;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  outline: none;
+  background: #f9fafb;
+}
+
+.prod-select:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.12);
+}
+
+.prod-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.list-container.pro {
+  background: transparent;
+}
+
+.list-table.pro th,
+.list-table.pro td {
+  padding: 14px 14px;
+}
+
+.prod-name {
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.prod-price {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.prod-desc {
+  color: #334155;
+}
+
+.prod-muted {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.loading-text {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.empty-box {
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.04);
+  text-align: center;
+}
+
+.empty-title {
+  font-weight: 900;
+  color: var(--primary-dark);
+  font-size: 1.1rem;
+}
+
+.empty-text {
+  margin-top: 6px;
+  color: #64748b;
+}
+
+/* modal menor */
+.modal-sm {
+  max-width: 420px;
+}
+
+/* responsivo */
+@media (max-width: 980px) {
+  .prod-stats {
+    grid-template-columns: 1fr;
+  }
+  .prod-filters {
+    grid-template-columns: 1fr;
+  }
+  .prod-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .prod-header {
+    flex-direction: column;
+  }
+}

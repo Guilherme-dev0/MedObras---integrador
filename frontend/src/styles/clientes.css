@@ -1,0 +1,147 @@
+/* ----- CONTAINER PRINCIPAL ----- */
+.page-container {
+  padding: 30px 40px;
+  background: #f5f7fb; /* igual dashboard */
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+}
+
+/* ----- TÍTULO ----- */
+.page-title {
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #23374d;
+}
+
+/* ----- BOTÃO PRINCIPAL ----- */
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-bottom: 25px;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+/* ----- CARD DE LISTAGEM ----- */
+.list-container {
+  background: white;
+  padding: 25px;
+  border-radius: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 900px;
+}
+
+.list-title {
+  font-size: 20px;
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #23374d;
+}
+
+/* ----- TEXTO QUANDO NÃO EXISTE NADA ----- */
+.empty-text {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+  font-size: 16px;
+}
+
+/* ----- TABELA ----- */
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.list-table th {
+  text-align: left;
+  padding: 12px;
+  background: #eff3fa;
+  font-weight: 600;
+  color: #23374d;
+  font-size: 14px;
+}
+
+.list-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #374151;
+}
+
+.list-table tr:hover {
+  background: #f9fafc;
+}
+
+/* ----- BOTÃO DE EDITAR ----- */
+.btn-edit {
+  background: #10b981;
+  color: white;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-edit:hover {
+  background: #059669;
+}
+
+.cliente-btn-enderecos {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: 0.2s;
+}
+
+.cliente-btn-enderecos:hover {
+  background: #0b57d0;
+}
+.acoes {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-excluir {
+  background-color: #ff4d4d;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.btn-excluir:hover {
+  background-color: #d93636;
+}
+
+.btn-editar {
+  background-color: #36b37e;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-editar:hover {
+  background-color: #2a8c63;
+}
