@@ -14,7 +14,7 @@ import Enderecos from "./pages/enderecos.jsx";
 import Medicoes from "./pages/medicoes.jsx";
 import EnderecosListar from "./pages/enderecosListar.jsx";
 import EnderecoEditar from "./pages/enderecoEditar.jsx";
-import ProtectedRoutes from "./componentes/ProtectedRoutes.jsx";
+import ProtectedRoute from "./componentes/protectedRoutes";
 import EditarMedicao from "./pages/editarMedicao.jsx";
 import MedicoesConcluidas from "./pages/medicoesConcluidas.jsx";
 import AgendarMedicao from "./pages/agendarMedicao.jsx";
@@ -37,7 +37,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/resetar-senha" element={<ResetarSenha />} />
 
         {/* ROTAS PROTEGIDAS */}
-        <Route element={<ProtectedRoutes />}>
+        <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
            <Route path="/medicoes/editar/:id" element={<EditarMedicao />} />
            <Route path="/medicoes/concluidas" element={<MedicoesConcluidas />} />
