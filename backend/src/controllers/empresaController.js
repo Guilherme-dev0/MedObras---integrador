@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import prisma from '../db/prisma.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { validarCNPJ } from '../utils/validaCnpj.js'
-
-const prisma = new PrismaClient()
 
 function gerarLicenca() {
   return Math.floor(1000 + Math.random() * 9000).toString()
