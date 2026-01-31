@@ -18,6 +18,7 @@ export default function AgendarMedicao() {
 
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSugestoes, setShowSugestoes] = useState(false);
 
   useEffect(() => {
     carregarClientes();
@@ -49,6 +50,7 @@ export default function AgendarMedicao() {
       const termo = String(valor || "").trim();
       if (termo.length < 1) {
         setClientes([]);
+        setShowSugestoes(false);
         return;
       }
       const url = `/clientes/search/${encodeURIComponent(termo)}?t=${Date.now()}`;
@@ -59,8 +61,10 @@ export default function AgendarMedicao() {
       }
       console.log("Resultados da busca:", res.data);
       setClientes(res.data || []);
+      setShowSugestoes(true);
     } catch {
       setClientes([]);
+      setShowSugestoes(false);
     }
   }
 
@@ -86,6 +90,7 @@ export default function AgendarMedicao() {
       setClienteId("");
       setEnderecos([]);
       setEnderecoId("");
+      setShowSugestoes(false);
       return;
     }
   }, [clienteBusca]);
@@ -110,6 +115,8 @@ export default function AgendarMedicao() {
     setEnderecos([]);
     setErro("");
     carregarEnderecos(id);
+    setClientes([]);
+    setShowSugestoes(false);
   }
 
   function limparFormulario() {
@@ -221,17 +228,25 @@ export default function AgendarMedicao() {
                 setClienteBusca(e.target.value);
                 buscarClientes(e.target.value);
               }}
+              onFocus={() => {
+                if (clienteBusca.trim().length > 0 && clientes.length > 0) {
+                  setShowSugestoes(true);
+                }
+              }}
+              onBlur={() => {
+                setTimeout(() => setShowSugestoes(false), 120);
+              }}
               required
             />
 
-            {clientes.length > 0 && (
+            {showSugestoes && clienteBusca.trim() && clientes.length > 0 && (
               <div className="autocomplete-box">
                 {clientes.slice(0, 6).map((c) => (
                   <button
                     key={c.id}
                     type="button"
                     className="autocomplete-item"
-                    onClick={() => selecionarCliente(c.id, c.nome)}
+                    onMouseDown={() => selecionarCliente(c.id, c.nome)}
                   >
                     <span style={{ marginRight: 8 }}>👤</span>
                     <span>{c.nome}</span>

@@ -16,6 +16,7 @@ export default function AgendarMedicao() {
   const [descricao, setDescricao] = useState("");
 
   const [buscaCliente, setBuscaCliente] = useState("");
+  const [showSugestoes, setShowSugestoes] = useState(false);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -60,6 +61,7 @@ export default function AgendarMedicao() {
       const termo = String(valor || "").trim();
       if (termo.length < 1) {
         setClientes([]);
+        setShowSugestoes(false);
         return;
       }
       const url = `/clientes/search/${encodeURIComponent(termo)}?t=${Date.now()}`;
@@ -70,9 +72,11 @@ export default function AgendarMedicao() {
       }
       console.log("Resultados da busca:", res.data);
       setClientes(res.data || []);
+      setShowSugestoes(true);
     } catch (err) {
       console.error("Erro ao buscar clientes:", err);
       setClientes([]);
+      setShowSugestoes(false);
     }
   }
 
@@ -102,6 +106,8 @@ export default function AgendarMedicao() {
     setEnderecos([]);
     setErro("");
     carregarEnderecos(id);
+    setClientes([]);
+    setShowSugestoes(false);
   }
 
   async function salvar(e) {
@@ -174,16 +180,24 @@ export default function AgendarMedicao() {
                 setBuscaCliente(v);
                 buscarClientes(v);
               }}
+              onFocus={() => {
+                if (buscaCliente.trim().length > 0 && clientes.length > 0) {
+                  setShowSugestoes(true);
+                }
+              }}
+              onBlur={() => {
+                setTimeout(() => setShowSugestoes(false), 120);
+              }}
             />
 
-            {clientesSugeridos.length > 0 && (
+            {showSugestoes && clientesSugeridos.length > 0 && (
               <div className="autocomplete-box">
                 {clientesSugeridos.map((c) => (
                   <button
                     key={c.id}
                     type="button"
                     className="autocomplete-item"
-                    onClick={() => selecionarCliente(c.id)}
+                    onMouseDown={() => selecionarCliente(c.id)}
                   >
                     <span style={{ marginRight: 8 }}>👤</span>
                     <span>{c.nome}</span>
