@@ -80,42 +80,29 @@ export default function AgendarMedicao() {
 
  
 
-  // ✅ quando o texto bater com a sugestão, define clienteId e carrega endereços
   useEffect(() => {
     const texto = clienteBusca.trim();
-
     if (!texto) {
       setClienteId("");
       setEnderecos([]);
       setEnderecoId("");
       return;
     }
-
-    const textoLower = texto.toLowerCase();
-    const achou =
-      clientes.find((c) => (c.nome || "").toLowerCase() === textoLower) ||
-      (clientes.length === 1 &&
-        (clientes[0].nome || "").toLowerCase().includes(textoLower)
-        ? clientes[0]
-        : undefined);
-
-    if (achou) {
-      setClienteId(String(achou.id));
-      setEnderecoId("");
-      setErro("");
-      carregarEnderecos(achou.id);
-    } else {
-      setClienteId("");
-      setEnderecos([]);
-      setEnderecoId("");
-    }
-  }, [clienteBusca, clientes]);
+  }, [clienteBusca]);
 
   const clienteSelecionado = useMemo(
     () => clientes.find((c) => String(c.id) === String(clienteId)),
     [clientes, clienteId]
   );
 
+  useEffect(() => {
+    const texto = clienteBusca.trim();
+    if (clienteSelecionado && clienteSelecionado.nome !== texto) {
+      setClienteId("");
+      setEnderecos([]);
+      setEnderecoId("");
+    }
+  }, [clienteBusca, clienteSelecionado]);
   function selecionarCliente(id, nome) {
     setClienteId(String(id));
     setClienteBusca(nome);
