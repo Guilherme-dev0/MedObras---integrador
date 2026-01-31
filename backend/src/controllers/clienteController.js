@@ -125,29 +125,27 @@ export async function buscarClientePorNome(req, res) {
     console.log("🔎 Buscando por nome:", nome);
     console.log("👤 Empresa logada ID:", req.user?.id);
 
-    // Buscar todos da empresa
+    const termo = String(nome || "").trim();
     const clientes = await prisma.cliente.findMany({
       where: {
-        empresaId: req.user.id
+        empresaId: req.user.id,
+        OR: [
+          { nome: { contains: termo, mode: "insensitive" } },
+          { telefone: { contains: termo, mode: "insensitive" } },
+          { cpf: { contains: termo, mode: "insensitive" } },
+        ],
       },
       select: {
         id: true,
         nome: true,
-        telefone: true
-      }
+        telefone: true,
+        cpf: true,
+      },
     });
 
-  const normalizar = (s) =>
-    String(s)
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-  const termo = normalizar(nome);
-  const filtrados = clientes.filter((c) => normalizar(c.nome).includes(termo));
+    console.log("📌 Resultados encontrados:", clientes);
 
-    console.log("📌 Resultados encontrados:", filtrados);
-
-    res.json(filtrados);
+    res.json(clientes);
 
   } catch (error) {
     console.error("❌ ERRO NO buscarClientePorNome:");
