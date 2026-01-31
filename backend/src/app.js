@@ -10,7 +10,7 @@ import produtoRoutes from './routes/produtoRoutes.js'
 import passwwordRoutes from './routes/passwordRoutes.js'
 dotenv.config()
 const app = express()
-app.use(cors())
+app.use(cors({ origin: ["https://medobras.vercel.app", "https://medobras-53f5bj99s-guilhermes-projects-3d57c3d9.vercel.app", "http://localhost:5173"] }))
 app.use(express.json())
 app.use('/auth', passwwordRoutes)
 app.use('/clientes', clienteRoutes)
