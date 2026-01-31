@@ -180,3 +180,11 @@
 .layout-content {
   padding: 24px 32px 32px 32px;
 }
+
+/* Responsividade estrutural para dispositivos móveis */
+@media (max-width: 768px) {
+  .layout-main {
+    margin-left: 0;
+    padding: 0 15px;
+  }
+}
