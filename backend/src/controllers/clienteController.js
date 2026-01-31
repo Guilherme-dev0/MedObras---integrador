@@ -126,26 +126,47 @@ export async function buscarClientePorNome(req, res) {
     console.log("👤 Empresa logada ID:", req.user?.id);
 
     const termo = String(nome || "").trim();
-    const clientes = await prisma.cliente.findMany({
-      where: {
-        empresaId: req.user.id,
-        OR: [
-          { nome: { contains: termo, mode: "insensitive" } },
-          { telefone: { contains: termo, mode: "insensitive" } },
-          { cpf: { contains: termo, mode: "insensitive" } },
-        ],
-      },
-      select: {
-        id: true,
-        nome: true,
-        telefone: true,
-        cpf: true,
-      },
-    });
-
-    console.log("📌 Resultados encontrados:", clientes);
-
-    res.json(clientes);
+    try {
+      const clientes = await prisma.cliente.findMany({
+        where: {
+          empresaId: req.user.id,
+          OR: [
+            { nome: { contains: termo } },
+            { telefone: { contains: termo } },
+            { cpf: { contains: termo } },
+          ],
+        },
+        select: {
+          id: true,
+          nome: true,
+          telefone: true,
+          cpf: true,
+        },
+      });
+      console.log("📌 Resultados (DB contains):", { termo, count: clientes.length });
+      return res.json(clientes);
+    } catch (dbErr) {
+      console.log("⚠️ Falha na busca DB contains, aplicando fallback de filtro em memória:", dbErr?.message);
+      const todos = await prisma.cliente.findMany({
+        where: { empresaId: req.user.id },
+        select: { id: true, nome: true, telefone: true, cpf: true },
+      });
+      const normalizar = (s) =>
+        String(s || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase();
+      const qn = normalizar(termo);
+      const filtrados = todos.filter((c) => {
+        return (
+          normalizar(c.nome).includes(qn) ||
+          normalizar(c.telefone).includes(qn) ||
+          normalizar(c.cpf).includes(qn)
+        );
+      });
+      console.log("📌 Resultados (fallback memória):", { termo, count: filtrados.length });
+      return res.json(filtrados);
+    }
 
   } catch (error) {
     console.error("❌ ERRO NO buscarClientePorNome:");

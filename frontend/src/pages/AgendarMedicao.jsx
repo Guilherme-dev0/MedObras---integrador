@@ -62,7 +62,7 @@ export default function AgendarMedicao() {
         setClientes([]);
         return;
       }
-      const res = await api.get(`/clientes/search/${termo}`);
+      const res = await api.get(`/api/clientes/search/${termo}`);
       console.log("Resultados da busca:", res.data);
       setClientes(res.data || []);
     } catch (err) {

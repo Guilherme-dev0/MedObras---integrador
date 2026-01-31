@@ -17,6 +17,7 @@ app.get('/api/ping', (req, res) => {
 })
 app.use('/auth', passwwordRoutes)
 app.use('/clientes', clienteRoutes)
+app.use('/api/clientes', clienteRoutes)
 app.use('/medicoes', medicaoRoutes)
 app.use('/relatorios', relatorioRoutes)
 app.use('/empresas', empresaRoutes)
