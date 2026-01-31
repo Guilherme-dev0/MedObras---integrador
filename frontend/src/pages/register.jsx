@@ -19,6 +19,7 @@ export default function Register() {
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function maskCnpj(value) {
     return value
@@ -55,6 +56,7 @@ export default function Register() {
     }
 
     try {
+      setLoading(true);
       const res = await api.post("/empresas/register", {
         nome,
         cnpj: cnpjLimpo,
@@ -71,6 +73,8 @@ export default function Register() {
 
     } catch (err) {
       alert("Erro ao cadastrar: " + (err.response?.data?.erro || ""));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -91,6 +95,7 @@ export default function Register() {
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -103,6 +108,7 @@ export default function Register() {
               value={cnpj}
               onChange={(e) => setCnpj(maskCnpj(e.target.value))}
               required
+              disabled={loading}
             />
           </div>
 
@@ -115,6 +121,7 @@ export default function Register() {
               value={telefone}
               onChange={(e) => setTelefone(maskPhone(e.target.value))}
               required
+              disabled={loading}
             />
           </div>
 
@@ -127,6 +134,7 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -139,10 +147,13 @@ export default function Register() {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
-          <button className="register-button">Criar Conta</button>
+          <button className="register-button" disabled={loading}>
+            {loading ? "Carregando..." : "Criar Conta"}
+          </button>
 
           <div className="register-links">
             Já possui conta? <a href="/">Entrar</a>

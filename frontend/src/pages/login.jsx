@@ -12,10 +12,12 @@ export default function Login() {
   const [cnpj, setCnpj] = useState("");
   const [senha, setSenha] = useState("");
   const [licenca, setLicenca] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
 
+    setLoading(true);
     try {
       const res = await api.post("/empresas/login", {
         cnpj,
@@ -38,6 +40,8 @@ export default function Login() {
         "Não foi possível entrar. Verifique seus dados e tente novamente.";
 
       alert(msg);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -58,6 +62,7 @@ export default function Login() {
               value={cnpj}
               onChange={(e) => setCnpj(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -69,6 +74,7 @@ export default function Login() {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -81,6 +87,7 @@ export default function Login() {
               value={licenca}
               onChange={(e) => setLicenca(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -89,7 +96,9 @@ export default function Login() {
             <a href="/esqueci-senha">Esqueceu a senha?</a>
           </div>
 
-          <button className="login-button">Entrar</button>
+          <button className="login-button" disabled={loading}>
+            {loading ? "Carregando..." : "Entrar"}
+          </button>
 
           <div className="login-footer">
             Não possui uma conta? <a href="/register">Inscrever-se</a>
