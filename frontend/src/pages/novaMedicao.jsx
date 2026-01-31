@@ -106,14 +106,6 @@ export default function AgendarMedicao() {
     return found || { id: clienteId, nome: clienteBusca };
   }, [clientes, clienteId, clienteBusca]);
 
-  useEffect(() => {
-    const texto = clienteBusca.trim();
-    if (clienteSelecionado && clienteSelecionado.nome !== texto) {
-      setClienteId("");
-      setEnderecos([]);
-      setEnderecoId("");
-    }
-  }, [clienteBusca, clienteSelecionado]);
   function selecionarCliente(id, nome) {
     setClienteId(String(id));
     setClienteBusca(nome);
