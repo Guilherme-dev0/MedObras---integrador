@@ -74,9 +74,7 @@ export default function AgendarMedicao() {
   }
 
   function clienteLabel(c) {
-    const tel = c.telefone ? ` — ${c.telefone}` : "";
-    const cpf = c.cpf ? ` (${c.cpf})` : "";
-    return `${c.nome}${tel}${cpf}`.trim();
+    return String(c.nome || "").trim();
   }
 
   // ✅ quando o texto bater com a sugestão, define clienteId e carrega endereços
@@ -90,7 +88,13 @@ export default function AgendarMedicao() {
       return;
     }
 
-    const achou = clientes.find((c) => clienteLabel(c) === texto);
+    const textoLower = texto.toLowerCase();
+    const achou =
+      clientes.find((c) => (c.nome || "").toLowerCase() === textoLower) ||
+      (clientes.length === 1 &&
+        (clientes[0].nome || "").toLowerCase().includes(textoLower)
+        ? clientes[0]
+        : undefined);
 
     if (achou) {
       setClienteId(String(achou.id));
