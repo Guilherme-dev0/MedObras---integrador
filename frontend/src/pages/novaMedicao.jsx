@@ -5,6 +5,7 @@ import "../styles/medicaoForm.css";
 export default function AgendarMedicao() {
   const [clientes, setClientes] = useState([]);
   const [enderecos, setEnderecos] = useState([]);
+  const [enderecosLoading, setEnderecosLoading] = useState(false);
   const [produtos, setProdutos] = useState([]);
 
   // ✅ Campo único com autocomplete
@@ -75,11 +76,14 @@ export default function AgendarMedicao() {
         setEnderecos([]);
         return;
       }
+      setEnderecosLoading(true);
       const res = await api.get(`/enderecos/cliente/${clienteIdSelecionado}`);
       setEnderecos(res.data || []);
     } catch {
       setEnderecos([]);
       setErro("Não foi possível carregar os endereços do cliente selecionado.");
+    } finally {
+      setEnderecosLoading(false);
     }
   }
 
@@ -96,10 +100,11 @@ export default function AgendarMedicao() {
     }
   }, [clienteBusca]);
 
-  const clienteSelecionado = useMemo(
-    () => clientes.find((c) => String(c.id) === String(clienteId)),
-    [clientes, clienteId]
-  );
+  const clienteSelecionado = useMemo(() => {
+    if (!clienteId) return null;
+    const found = clientes.find((c) => String(c.id) === String(clienteId));
+    return found || { id: clienteId, nome: clienteBusca };
+  }, [clientes, clienteId, clienteBusca]);
 
   useEffect(() => {
     const texto = clienteBusca.trim();
@@ -292,7 +297,7 @@ export default function AgendarMedicao() {
                 ))}
               </select>
 
-              {clienteId && enderecos.length === 0 && (
+              {clienteId && !enderecosLoading && enderecos.length === 0 && (
                 <div className="mb-hint mb-warn">
                   Este cliente não possui endereços cadastrados. Por favor, cadastre um endereço antes de prosseguir com o agendamento.
                 </div>
@@ -344,7 +349,11 @@ export default function AgendarMedicao() {
             <button
               className="mb-btn-primary"
               type="submit"
-              disabled={loading || (clienteId && enderecos.length === 0)}
+              disabled={
+                loading ||
+                (clienteId && !enderecosLoading && enderecos.length === 0) ||
+                enderecosLoading
+              }
             >
               {loading ? "Salvando..." : "Agendar Medição"}
             </button>
