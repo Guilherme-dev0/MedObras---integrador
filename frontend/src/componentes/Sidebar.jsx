@@ -1,9 +1,14 @@
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import logoMedobras from "../assets/icons/logoMedobras.jpeg";
 import "../styles/layout.css";
 
 export default function Sidebar() {
+  const location = useLocation();
+  const path = location.pathname;
+  const isMedicoesConcluidas = path.startsWith("/medicoes/concluidas");
+  const isMedicoesSection =
+    path.startsWith("/medicoes") && !isMedicoesConcluidas;
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -47,9 +52,7 @@ export default function Sidebar() {
 
         <NavLink
           to="/medicoes"
-          className={({ isActive }) =>
-            "sidebar-item" + (isActive ? " active" : "")
-          }
+          className={() => "sidebar-item" + (isMedicoesSection ? " active" : "")}
         >
           <span>📏</span>
           <span>Agendar Medições</span>
@@ -58,8 +61,8 @@ export default function Sidebar() {
         {/* 🔵 NOVA OPÇÃO: Medições Concluídas */}
         <NavLink
           to="/medicoes/concluidas"
-          className={({ isActive }) =>
-            "sidebar-item" + (isActive ? " active" : "")
+          className={() =>
+            "sidebar-item" + (isMedicoesConcluidas ? " active" : "")
           }
         >
           <span>📘</span>
