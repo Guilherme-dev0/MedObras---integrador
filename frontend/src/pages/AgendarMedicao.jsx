@@ -99,9 +99,9 @@ export default function AgendarMedicao() {
       .slice(0, 6);
   }, [buscaCliente, clientes]);
 
-  function selecionarCliente(id) {
+  function selecionarCliente(id, nome) {
     setClienteId(String(id));
-    setBuscaCliente("");
+    setBuscaCliente(nome);
     setEnderecoId("");
     setEnderecos([]);
     setErro("");
@@ -197,7 +197,7 @@ export default function AgendarMedicao() {
                     key={c.id}
                     type="button"
                     className="autocomplete-item"
-                    onMouseDown={() => selecionarCliente(c.id)}
+                    onMouseDown={() => selecionarCliente(c.id, c.nome)}
                   >
                     <span style={{ marginRight: 8 }}>👤</span>
                     <span>{c.nome}</span>
@@ -273,7 +273,7 @@ export default function AgendarMedicao() {
 
               {clienteId && enderecos.length === 0 && (
                 <div className="helper warn">
-                  Este cliente ainda não possui endereços cadastrados.
+                  Este cliente não possui endereços cadastrados. Por favor, cadastre um endereço antes de prosseguir com o agendamento.
                 </div>
               )}
             </div>
@@ -323,7 +323,11 @@ export default function AgendarMedicao() {
 
           {/* FOOTER ACTIONS */}
           <div className="form-actions">
-            <button className="btn-primary" type="submit" disabled={loading}>
+            <button
+              className="btn-primary"
+              type="submit"
+              disabled={loading || (clienteId && enderecos.length === 0)}
+            >
               {loading ? "Agendando..." : "Agendar Medição"}
             </button>
 

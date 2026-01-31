@@ -19,6 +19,7 @@ export default function AgendarMedicao() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSugestoes, setShowSugestoes] = useState(false);
+  const [tentouSalvar, setTentouSalvar] = useState(false);
 
   useEffect(() => {
     carregarClientes();
@@ -133,9 +134,17 @@ export default function AgendarMedicao() {
   async function salvar(e) {
     e.preventDefault();
     setErro("");
+    setTentouSalvar(true);
 
     if (!clienteId || !enderecoId || !dataAgendada) {
       setErro("Preencha cliente, endereço e data/hora.");
+      return;
+    }
+
+    if (clienteId && enderecos.length === 0) {
+      setErro(
+        "Este cliente não possui endereços cadastrados. Por favor, cadastre um endereço antes de prosseguir com o agendamento."
+      );
       return;
     }
 
@@ -255,7 +264,7 @@ export default function AgendarMedicao() {
               </div>
             )}
 
-            {clienteBusca.trim() && !clienteId && (
+            {tentouSalvar && !clienteId && (
               <div className="mb-hint mb-warn">
                 Selecione um cliente válido na lista de sugestões.
               </div>
@@ -285,7 +294,7 @@ export default function AgendarMedicao() {
 
               {clienteId && enderecos.length === 0 && (
                 <div className="mb-hint mb-warn">
-                  Este cliente ainda não possui endereços cadastrados.
+                  Este cliente não possui endereços cadastrados. Por favor, cadastre um endereço antes de prosseguir com o agendamento.
                 </div>
               )}
             </div>
@@ -332,7 +341,11 @@ export default function AgendarMedicao() {
           </div>
 
           <div className="mb-actions">
-            <button className="mb-btn-primary" type="submit" disabled={loading}>
+            <button
+              className="mb-btn-primary"
+              type="submit"
+              disabled={loading || (clienteId && enderecos.length === 0)}
+            >
               {loading ? "Salvando..." : "Agendar Medição"}
             </button>
 
