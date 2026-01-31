@@ -51,7 +51,12 @@ export default function AgendarMedicao() {
         setClientes([]);
         return;
       }
-      const res = await api.get(`/api/clientes/search/${termo}`);
+      const url = `/api/clientes/search/${encodeURIComponent(termo)}?t=${Date.now()}`;
+      const res = await api.get(url, { headers: { "Cache-Control": "no-cache" } });
+      if (res.status === 304) {
+        console.log("Resultados da busca (304 cache): mantendo lista atual");
+        return;
+      }
       console.log("Resultados da busca:", res.data);
       setClientes(res.data || []);
     } catch {
