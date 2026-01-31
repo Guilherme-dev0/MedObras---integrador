@@ -55,6 +55,21 @@ export default function AgendarMedicao() {
     }
   }
 
+  async function buscarClientes(valor) {
+    try {
+      const termo = String(valor || "").trim();
+      if (termo.length < 2) {
+        setClientes([]);
+        return;
+      }
+      const res = await api.get(`/clientes/search/${termo}`);
+      setClientes(res.data || []);
+    } catch (err) {
+      console.error("Erro ao buscar clientes:", err);
+      setClientes([]);
+    }
+  }
+
   const clientesSugeridos = useMemo(() => {
     const q = buscaCliente.trim();
     if (!q) return [];
@@ -148,7 +163,11 @@ export default function AgendarMedicao() {
               className="search-input"
               placeholder="Digite nome, telefone ou CPF..."
               value={buscaCliente}
-              onChange={(e) => setBuscaCliente(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setBuscaCliente(v);
+                buscarClientes(v);
+              }}
             />
 
             {clientesSugeridos.length > 0 && (

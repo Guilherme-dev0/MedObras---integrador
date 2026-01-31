@@ -44,6 +44,20 @@ export default function AgendarMedicao() {
     }
   }
 
+  async function buscarClientes(valor) {
+    try {
+      const termo = String(valor || "").trim();
+      if (termo.length < 2) {
+        setClientes([]);
+        return;
+      }
+      const res = await api.get(`/clientes/search/${termo}`);
+      setClientes(res.data || []);
+    } catch {
+      setClientes([]);
+    }
+  }
+
   async function carregarEnderecos(clienteIdSelecionado) {
     try {
       if (!clienteIdSelecionado) {
@@ -202,6 +216,7 @@ export default function AgendarMedicao() {
               onChange={(e) => {
                 setErro("");
                 setClienteBusca(e.target.value);
+                buscarClientes(e.target.value);
               }}
               required
             />
