@@ -1,5 +1,7 @@
 .dash-container {
   max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .dash-title {
@@ -30,6 +32,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  height: auto;
 }
 
 .dash-card.primary {
@@ -68,8 +71,24 @@
 /* grid inferior */
 .dash-grid {
   display: grid;
-  grid-template-columns: 2fr 2fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+  .dash-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dash-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .dash-panel {

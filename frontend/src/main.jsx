@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import "./styles/global.css";
+import "./styles/layout.css";
 
 import Login from "./pages/login.jsx";
 import Register from "./pages/register.jsx";
