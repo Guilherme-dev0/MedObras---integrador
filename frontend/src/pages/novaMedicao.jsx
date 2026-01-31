@@ -47,11 +47,11 @@ export default function AgendarMedicao() {
   async function buscarClientes(valor) {
     try {
       const termo = String(valor || "").trim();
-      if (termo.length < 2) {
+      if (termo.length < 1) {
         setClientes([]);
         return;
       }
-      const url = `/api/clientes/search/${encodeURIComponent(termo)}?t=${Date.now()}`;
+      const url = `/clientes/search/${encodeURIComponent(termo)}?t=${Date.now()}`;
       const res = await api.get(url, { headers: { "Cache-Control": "no-cache" } });
       if (res.status === 304) {
         console.log("Resultados da busca (304 cache): mantendo lista atual");
@@ -78,9 +78,7 @@ export default function AgendarMedicao() {
     }
   }
 
-  function clienteLabel(c) {
-    return String(c.nome || "").trim();
-  }
+ 
 
   // ✅ quando o texto bater com a sugestão, define clienteId e carrega endereços
   useEffect(() => {
@@ -117,6 +115,15 @@ export default function AgendarMedicao() {
     () => clientes.find((c) => String(c.id) === String(clienteId)),
     [clientes, clienteId]
   );
+
+  function selecionarCliente(id, nome) {
+    setClienteId(String(id));
+    setClienteBusca(nome);
+    setEnderecoId("");
+    setEnderecos([]);
+    setErro("");
+    carregarEnderecos(id);
+  }
 
   function limparFormulario() {
     setClienteBusca("");
@@ -220,7 +227,6 @@ export default function AgendarMedicao() {
 
             <input
               className="mb-input"
-              list="clientes-list"
               placeholder="Digite nome, telefone ou CPF..."
               value={clienteBusca}
               onChange={(e) => {
@@ -231,11 +237,21 @@ export default function AgendarMedicao() {
               required
             />
 
-            <datalist id="clientes-list">
-              {clientes.map((c) => (
-                <option key={c.id} value={clienteLabel(c)} />
-              ))}
-            </datalist>
+            {clientes.length > 0 && (
+              <div className="autocomplete-box">
+                {clientes.slice(0, 6).map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="autocomplete-item"
+                    onClick={() => selecionarCliente(c.id, c.nome)}
+                  >
+                    <span style={{ marginRight: 8 }}>👤</span>
+                    <span>{c.nome}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             {clienteBusca.trim() && !clienteId && (
               <div className="mb-hint mb-warn">

@@ -58,11 +58,11 @@ export default function AgendarMedicao() {
   async function buscarClientes(valor) {
     try {
       const termo = String(valor || "").trim();
-      if (termo.length < 2) {
+      if (termo.length < 1) {
         setClientes([]);
         return;
       }
-      const url = `/api/clientes/search/${encodeURIComponent(termo)}?t=${Date.now()}`;
+      const url = `/clientes/search/${encodeURIComponent(termo)}?t=${Date.now()}`;
       const res = await api.get(url, { headers: { "Cache-Control": "no-cache" } });
       if (res.status === 304) {
         console.log("Resultados da busca (304 cache): mantendo lista atual");
@@ -177,19 +177,16 @@ export default function AgendarMedicao() {
             />
 
             {clientesSugeridos.length > 0 && (
-              <div className="suggestions">
+              <div className="autocomplete-box">
                 {clientesSugeridos.map((c) => (
                   <button
                     key={c.id}
                     type="button"
-                    className="suggestion-item"
+                    className="autocomplete-item"
                     onClick={() => selecionarCliente(c.id)}
                   >
-                    <div className="s-title">{c.nome}</div>
-                    <div className="s-sub">
-                      {c.telefone ? c.telefone : "—"}{" "}
-                      {c.cpf ? `• CPF: ${c.cpf}` : ""}
-                    </div>
+                    <span style={{ marginRight: 8 }}>👤</span>
+                    <span>{c.nome}</span>
                   </button>
                 ))}
               </div>
