@@ -12,9 +12,7 @@ dotenv.config()
 const app = express()
 app.use(cors({ origin: ["https://medobras.vercel.app", "https://medobras-53f5bj99s-guilhermes-projects-3d57c3d9.vercel.app", "http://localhost:5173"] }))
 app.use(express.json())
-app.get('/api/ping', (req, res) => {
-  res.status(200).json({ status: 'ok' })
-})
+
 app.use('/auth', passwwordRoutes)
 app.use('/clientes', clienteRoutes)
 app.use('/api/clientes', clienteRoutes)

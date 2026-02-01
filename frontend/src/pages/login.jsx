@@ -99,6 +99,15 @@ export default function Login() {
           <button className="login-button" disabled={loading}>
             {loading ? "Carregando..." : "Entrar"}
           </button>
+          
+          {loading && (
+            <div style={{ marginTop: 10, textAlign: 'center', fontSize: '0.9rem', color: '#666' }}>
+              <p>Conectando ao servidor...</p>
+              <p style={{ fontSize: '0.8rem', color: '#999' }}>
+                (A primeira conexão pode levar até 50s para ativar o ambiente seguro)
+              </p>
+            </div>
+          )}
 
           <div className="login-footer">
             Não possui uma conta? <a href="/register">Inscrever-se</a>

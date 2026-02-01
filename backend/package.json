@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/server.js",
+    "build": "prisma generate",
     "start": "node src/server.js",
     "seed": "node scripts/seed.js",
     "prepare": "prisma generate"

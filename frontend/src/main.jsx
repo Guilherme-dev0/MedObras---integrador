@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -26,23 +26,10 @@ import ProdutoEditar from "./pages/produtoEditar.jsx";
 import EsqueciSenha from "./pages/esqueciSenha.jsx";
 import ResetarSenha from "./pages/resetarSenha.jsx";
 
-export function Heartbeat() {
-  useEffect(() => {
-    if (!import.meta.env.PROD) return;
-    const url = "https://medobras-integrador.onrender.com/api/ping";
-    const ping = () => {
-      fetch(url, { method: "GET", cache: "no-store" }).catch(() => {});
-    };
-    ping();
-    const id = setInterval(ping, 10 * 60 * 1000);
-    return () => clearInterval(id);
-  }, []);
-  return null;
-}
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <Heartbeat />
     <BrowserRouter>
       <Routes>
 
