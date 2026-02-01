@@ -1,7 +1,6 @@
 import prisma from "../db/prisma.js";
 import bcrypt from "bcryptjs";
 import { gerarTokenRecuperacao, hashToken } from "../utils/token.js";
-import { enviarEmail } from "../config/mailer.js";
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -15,11 +14,11 @@ export const forgotPassword = async (req, res) => {
     });
   }
 
-  // ✅ Segurança: não revela se o email existe
+  // ✅ Modo Acadêmico: sempre retorna o link gerado ao cliente
   const respostaPadrao = {
     success: true,
-    title: "Solicitação enviada",
-    message: "Se este e-mail estiver cadastrado, enviaremos um link de recuperação.",
+    message: "Link gerado (Modo Teste)",
+    resetLink: null,
   };
 
   const empresa = await prisma.empresa.findUnique({ where: { email } });
@@ -38,60 +37,16 @@ export const forgotPassword = async (req, res) => {
     data: { tokenHash, expiresAt, empresaId: empresa.id },
   });
 
-  // ✅ DEV: printa o link no console (sem e-mail ainda)
+  // DEV/Acadêmico: printa o link no console e retorna ao cliente
   const frontUrl = process.env.FRONT_URL || "http://localhost:5173";
   const resetLink = `${frontUrl}/resetar-senha?token=${token}`;
   console.log("LINK RECUPERACAO (DEV):", resetLink);
 
-  // Envio de e-mail assíncrono
-  const assunto = "Recuperação de Senha - MedObras";
-  const html = `
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#eef3ff;padding:24px 0;">
-      <tr>
-        <td align="center">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="width:100%;max-width:600px;background:#ffffff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.08);font-family: Arial, Helvetica, sans-serif;color:#333;">
-            <tr>
-              <td align="center" style="padding:24px 24px 0 24px;">
-                <div style="font-size:24px;font-weight:700;color:#1b3d8a;">MedObras</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 24px 0 24px;">
-                <div style="font-size:16px;line-height:1.5;color:#333;">
-                  <p style="margin:0 0 12px 0;">Você solicitou a redefinição de sua senha.</p>
-                  <p style="margin:0 0 24px 0;">Clique no botão abaixo para criar uma nova senha:</p>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td align="center" style="padding:0 24px 24px 24px;">
-                <a href="${resetLink}" style="display:inline-block;background:#1d72e0;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 24px;">Redefinir Minha Senha</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:0 24px 16px 24px;">
-                <div style="font-size:14px;color:#555;line-height:1.5;">
-                  <p style="margin:0 0 8px 0;">Se você não solicitou isso, ignore este e-mail.</p>
-                  <p style="margin:0;">Este link expira em 1 hora.</p>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 24px 24px 24px;border-top:1px solid #eee;">
-                <div style="font-size:12px;color:#888;text-align:center;">Este é um e-mail automático. Não responda.</div>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  `;
-
-  enviarEmail(email, assunto, html).catch(err => 
-    console.error("Erro ao enviar e-mail de recuperação:", err)
-  );
-
-  return res.status(200).json(respostaPadrao);
+  // MODO ACADÊMICO: desativa envio real de e-mail
+  // const assunto = "Recuperação de Senha - MedObras";
+  // const html = "...template...";
+  // enviarEmail(email, assunto, html).catch(err => console.error("Erro ao enviar e-mail de recuperação:", err));
+  return res.status(200).json({ ...respostaPadrao, resetLink });
 };
 
 export const resetPassword = async (req, res) => {

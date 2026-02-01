@@ -11,6 +11,16 @@ export default function ConfirmModal({
   const confirmBtnRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
+  const onConfirm = useCallback(async () => {
+    try {
+      setLoading(true);
+      await Promise.resolve(funcaoConfirmar?.());
+      onClose?.();
+    } finally {
+      setLoading(false);
+    }
+  }, [funcaoConfirmar, onClose]);
+
   useEffect(() => {
     if (!isOpen) return;
     const btn = confirmBtnRef.current;
@@ -28,16 +38,6 @@ export default function ConfirmModal({
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, loading, onClose, onConfirm]);
-
-  const onConfirm = useCallback(async () => {
-    try {
-      setLoading(true);
-      await Promise.resolve(funcaoConfirmar?.());
-      onClose?.();
-    } finally {
-      setLoading(false);
-    }
-  }, [funcaoConfirmar, onClose]);
 
   if (!isOpen) return null;
 
