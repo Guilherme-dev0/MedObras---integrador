@@ -18,8 +18,12 @@ export default function RedefinirLicenca() {
     setProcessando(true);
     try {
       const res = await api.post("/auth/reset-license", { token });
-      const msg = res.data?.message || "Licença liberada.";
-      alert(msg);
+      const nova = res.data?.novaLicenca;
+      if (nova) {
+        alert(`Sucesso! Sua nova licença foi gerada: ${nova}. Guarde-a com segurança.`);
+      } else {
+        alert("Licença liberada.");
+      }
       window.location.href = "/";
     } catch (err) {
       const data = err.response?.data;

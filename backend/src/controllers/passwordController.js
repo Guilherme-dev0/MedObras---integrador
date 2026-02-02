@@ -188,6 +188,25 @@ export const resetLicense = async (req, res) => {
     });
   }
 
+  // Busca única das licenças existentes e compara em memória
+  const licencas = await prisma.empresa.findMany({
+    select: { licenca: true },
+  });
+  const usadas = new Set(
+    (licencas || []).map((l) => String(l.licenca || "").trim())
+  );
+
+  function gerarLicenca() {
+    return String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+  }
+
+  let novaLicenca = gerarLicenca();
+  let tentativas = 0;
+  while (usadas.has(novaLicenca) && tentativas < 50) {
+    novaLicenca = gerarLicenca();
+    tentativas++;
+  }
+
   await prisma.passwordResetToken.update({
     where: { id: registro.id },
     data: { usedAt: new Date() },
@@ -195,7 +214,6 @@ export const resetLicense = async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    title: "Licença liberada",
-    message: "Sua licença foi redefinida (Modo Acadêmico).",
+    novaLicenca,
   });
 };
