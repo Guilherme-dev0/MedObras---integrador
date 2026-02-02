@@ -207,6 +207,11 @@ export const resetLicense = async (req, res) => {
     tentativas++;
   }
 
+  await prisma.empresa.update({
+    where: { id: registro.empresaId },
+    data: { licenca: novaLicenca },
+  });
+
   await prisma.passwordResetToken.update({
     where: { id: registro.id },
     data: { usedAt: new Date() },
