@@ -49,6 +49,45 @@ export const forgotPassword = async (req, res) => {
   return res.status(200).json({ ...respostaPadrao, resetLink });
 };
 
+export const forgotLicense = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      errorCode: "EMAIL_OBRIGATORIO",
+      title: "E-mail obrigatório",
+      message: "Informe o e-mail para continuar.",
+    });
+  }
+
+  const respostaPadrao = {
+    success: true,
+    message: "Link gerado (Modo Teste)",
+    resetLink: null,
+  };
+
+  const empresa = await prisma.empresa.findUnique({ where: { email } });
+  if (!empresa) return res.status(200).json(respostaPadrao);
+
+  await prisma.passwordResetToken.updateMany({
+    where: { empresaId: empresa.id, usedAt: null, expiresAt: { gt: new Date() } },
+    data: { usedAt: new Date() },
+  });
+
+  const { token, tokenHash } = gerarTokenRecuperacao();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await prisma.passwordResetToken.create({
+    data: { tokenHash, expiresAt, empresaId: empresa.id },
+  });
+
+  const frontUrl = process.env.FRONT_URL || "http://localhost:5173";
+  const resetLink = `${frontUrl}/redefinir-licenca?token=${token}`;
+  console.log("LINK LICENÇA (DEV):", resetLink);
+  return res.status(200).json({ ...respostaPadrao, resetLink });
+};
+
 export const resetPassword = async (req, res) => {
   const { token, novaSenha } = req.body;
 
@@ -110,5 +149,53 @@ export const resetPassword = async (req, res) => {
     success: true,
     title: "Senha atualizada",
     message: "Sua senha foi redefinida com sucesso. Agora você já pode fazer login.",
+  });
+};
+
+export const resetLicense = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      errorCode: "DADOS_OBRIGATORIOS",
+      title: "Dados obrigatórios",
+      message: "Informe o token para continuar.",
+    });
+  }
+
+  const tokenHash = hashToken(token);
+
+  const registro = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash },
+  });
+
+  if (!registro || registro.usedAt) {
+    return res.status(400).json({
+      success: false,
+      errorCode: "TOKEN_INVALIDO",
+      title: "Link inválido",
+      message: "Este link é inválido ou já foi utilizado. Solicite uma nova recuperação.",
+    });
+  }
+
+  if (registro.expiresAt < new Date()) {
+    return res.status(400).json({
+      success: false,
+      errorCode: "TOKEN_EXPIRADO",
+      title: "Link expirado",
+      message: "Este link expirou. Solicite uma nova recuperação.",
+    });
+  }
+
+  await prisma.passwordResetToken.update({
+    where: { id: registro.id },
+    data: { usedAt: new Date() },
+  });
+
+  return res.status(200).json({
+    success: true,
+    title: "Licença liberada",
+    message: "Sua licença foi redefinida (Modo Acadêmico).",
   });
 };

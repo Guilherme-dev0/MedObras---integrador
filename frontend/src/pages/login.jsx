@@ -91,9 +91,8 @@ export default function Login() {
             />
           </div>
 
-          {/* ✅ Link de recuperação */}
           <div className="login-footer" style={{ marginTop: 8 }}>
-            <a href="/esqueci-senha">Esqueceu a senha?</a>
+            Esqueceu a <a href="/esqueci-senha">senha</a> ou a <a href="/esqueci-licenca">licença</a>?
           </div>
 
           <button className="login-button" disabled={loading}>
