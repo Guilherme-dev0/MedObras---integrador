@@ -309,6 +309,7 @@ export default function AgendarMedicao() {
                 type="datetime-local"
                 value={dataAgendada}
                 onChange={(e) => setDataAgendada(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
                 required
               />
               <div className="helper">

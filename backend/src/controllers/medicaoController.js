@@ -156,6 +156,16 @@ export async function criarMedicao(req, res) {
       return res.status(401).json({ erro: "Acesso não autorizado." });
     }
 
+    // Validação: impedir datas retroativas
+    const agora = new Date();
+    const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 0, 0, 0, 0);
+    const quando = new Date(dataAgendada);
+    if (isNaN(quando.getTime()) || quando < inicioHoje) {
+      return res.status(400).json({
+        erro: "Data inválida. Não é possível agendar medições em datas retroativas.",
+      });
+    }
+
     //  garante que o endereço pertence ao cliente e à empresa logada
     const enderecoValido = await prisma.endereco.findFirst({
       where: {
