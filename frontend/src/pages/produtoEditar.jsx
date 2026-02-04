@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import "../styles/produtos.css";
+import Swal from 'sweetalert2';
 
 export default function ProdutoEditar() {
   const { id } = useParams();
@@ -29,7 +30,7 @@ export default function ProdutoEditar() {
       setDescricao(res.data?.descricao || "");
     } catch (err) {
       console.error(err);
-      alert("Produto não encontrado.");
+      Swal.fire({ icon: 'error', title: 'Erro', text: 'Produto não encontrado.' });
       navigate("/produtos");
     } finally {
       setLoadingPage(false);
@@ -53,8 +54,26 @@ export default function ProdutoEditar() {
         descricao: descricao.trim() || null,
       });
 
-      alert("Produto atualizado com sucesso!");
-      navigate("/produtos");
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Produto atualizado com sucesso!'
+      });
+      
+      setTimeout(() => {
+        navigate("/produtos");
+      }, 1000);
     } catch (err) {
       console.error(err);
       setErro("Erro ao atualizar produto.");

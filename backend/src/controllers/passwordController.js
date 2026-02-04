@@ -14,15 +14,17 @@ export const forgotPassword = async (req, res) => {
     });
   }
 
-  // ✅ Modo Acadêmico: sempre retorna o link gerado ao cliente
-  const respostaPadrao = {
-    success: true,
-    message: "Link gerado (Modo Teste)",
-    resetLink: null,
-  };
-
+  // Validação real de e-mail (Fim do Modo Acadêmico)
   const empresa = await prisma.empresa.findUnique({ where: { email } });
-  if (!empresa) return res.status(200).json(respostaPadrao);
+  
+  if (!empresa) {
+    return res.status(400).json({
+      success: false,
+      errorCode: "EMAIL_NAO_ENCONTRADO",
+      title: "E-mail não cadastrado",
+      message: "E-mail não cadastrado",
+    });
+  }
 
   // invalida tokens anteriores ainda válidos
   await prisma.passwordResetToken.updateMany({
@@ -37,16 +39,16 @@ export const forgotPassword = async (req, res) => {
     data: { tokenHash, expiresAt, empresaId: empresa.id },
   });
 
-  // DEV/Acadêmico: printa o link no console e retorna ao cliente
+  // DEV: printa o link no console e retorna ao cliente (simulação de envio de e-mail)
   const frontUrl = process.env.FRONT_URL || "http://localhost:5173";
   const resetLink = `${frontUrl}/resetar-senha?token=${token}`;
-  console.log("LINK RECUPERACAO (DEV):", resetLink);
 
-  // MODO ACADÊMICO: desativa envio real de e-mail
-  // const assunto = "Recuperação de Senha - MedObras";
-  // const html = "...template...";
-  // enviarEmail(email, assunto, html).catch(err => console.error("Erro ao enviar e-mail de recuperação:", err));
-  return res.status(200).json({ ...respostaPadrao, resetLink });
+  // Retorno de sucesso real
+  return res.status(200).json({
+    success: true,
+    message: "Link de recuperação gerado com sucesso.",
+    resetLink // Retornando para o frontend simular o envio, conforme fluxo atual
+  });
 };
 
 export const forgotLicense = async (req, res) => {
@@ -61,14 +63,16 @@ export const forgotLicense = async (req, res) => {
     });
   }
 
-  const respostaPadrao = {
-    success: true,
-    message: "Link gerado (Modo Teste)",
-    resetLink: null,
-  };
-
   const empresa = await prisma.empresa.findUnique({ where: { email } });
-  if (!empresa) return res.status(200).json(respostaPadrao);
+  
+  if (!empresa) {
+    return res.status(400).json({
+      success: false,
+      errorCode: "EMAIL_NAO_ENCONTRADO",
+      title: "E-mail não cadastrado",
+      message: "E-mail não cadastrado",
+    });
+  }
 
   await prisma.passwordResetToken.updateMany({
     where: { empresaId: empresa.id, usedAt: null, expiresAt: { gt: new Date() } },
@@ -84,8 +88,12 @@ export const forgotLicense = async (req, res) => {
 
   const frontUrl = process.env.FRONT_URL || "http://localhost:5173";
   const resetLink = `${frontUrl}/redefinir-licenca?token=${token}`;
-  console.log("LINK LICENÇA (DEV):", resetLink);
-  return res.status(200).json({ ...respostaPadrao, resetLink });
+  
+  return res.status(200).json({ 
+    success: true, 
+    message: "Link de recuperação gerado com sucesso.", 
+    resetLink 
+  });
 };
 
 export const resetPassword = async (req, res) => {

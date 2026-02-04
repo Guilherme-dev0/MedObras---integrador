@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../api";
 import "../styles/medicaoForm.css";
+import Swal from 'sweetalert2';
 
-export default function AgendarMedicao() {
+export default function NovaMedicao() {
   const [clientes, setClientes] = useState([]);
   const [enderecos, setEnderecos] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -100,7 +101,7 @@ export default function AgendarMedicao() {
     const termo = normalize(buscaEndereco);
     if (!termo) return enderecos;
     return enderecos.filter((e) => {
-      const txt = normalize(`${e.logradouro} ${e.bairro} ${e.cidade}`);
+      const txt = normalize(`${e.logradouro}${e.numero ? ', ' + e.numero : ''} ${e.bairro} ${e.cidade}`);
       return txt.includes(termo);
     });
   }, [enderecos, buscaEndereco]);
@@ -187,8 +188,27 @@ export default function AgendarMedicao() {
         observacao: observacao || "",
         produtosSelecionados: itensValidos,
       });
-      alert("Medição agendada com sucesso!");
-      window.location.href = "/medicoes";
+      
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Medição agendada com sucesso!'
+      });
+      
+      setTimeout(() => {
+        window.location.href = "/medicoes";
+      }, 1000);
     } catch (err) {
       setErro(
         err.response?.data?.message ||
@@ -325,7 +345,7 @@ export default function AgendarMedicao() {
                     className="autocomplete-item"
                     onMouseDown={() => {
                       setEnderecoId(String(e.id));
-                      setBuscaEndereco(`${e.logradouro}, ${e.bairro} — ${e.cidade}`);
+                      setBuscaEndereco(`${e.logradouro}${e.numero ? ', ' + e.numero : ''}, ${e.bairro} — ${e.cidade}`);
                       setShowSugEnderecos(false);
                     }}
                   >
@@ -334,7 +354,7 @@ export default function AgendarMedicao() {
                         <path d="M12 2C8.686 2 6 4.686 6 8c0 5.25 6 12 6 12s6-6.75 6-12c0-3.314-2.686-6-6-6zm0 8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="var(--accent-pink)" />
                       </svg>
                     </span>
-                    {e.logradouro}, {e.bairro} — {e.cidade}
+                    {e.logradouro}{e.numero ? `, ${e.numero}` : ""}, {e.bairro} — {e.cidade}
                   </button>
                 ))}
               </div>

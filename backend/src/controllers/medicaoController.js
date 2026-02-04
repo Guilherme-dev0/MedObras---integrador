@@ -2,7 +2,7 @@ import prisma from "../db/prisma.js";
 
 function normalizeProdutosSelecionadosFromDescricao(m) {
   let produtosSelecionados = [];
-  let obsTexto = m.observacao || m.descricao || null;
+  let obsTexto = m.observacao ?? m.descricao ?? "";
   if (typeof m.descricao === "string") {
     try {
       const parsed = JSON.parse(m.descricao);
@@ -39,7 +39,7 @@ function normalizeProdutosSelecionadosFromDescricao(m) {
       }
     }
   }
-  return { ...m, produtosSelecionados, descricao: obsTexto };
+  return { ...m, produtosSelecionados, descricao: obsTexto || "" };
 }
 
 function buildCompactDescricao(obs, itens) {
@@ -76,7 +76,7 @@ export async function listarMedicoes(req, res) {
         endereco: true,
         produto: true,
       },
-      orderBy: { id: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     const medicoes = (medicoesRaw || []).map(normalizeProdutosSelecionadosFromDescricao);
@@ -108,7 +108,7 @@ export async function listarPendentes(req, res) {
         endereco: true,
         produto: true,
       },
-      orderBy: { id: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     const medicoes = (medicoesRaw || []).map(normalizeProdutosSelecionadosFromDescricao);
@@ -182,7 +182,7 @@ export async function listarConcluidas(req, res) {
         endereco: true,
         produto: true,
       },
-      orderBy: { id: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     const medicoes = (medicoesRaw || []).map(normalizeProdutosSelecionadosFromDescricao);
@@ -340,17 +340,7 @@ export async function atualizarMedicao(req, res) {
       produtosSelecionados, // opcional: compatibilidade com UI atual (escolhe 1º como principal)
     } = req.body;
 
-    console.log("Atualizar Medição payload:", {
-      id,
-      clienteId,
-      enderecoId,
-      dataAgendada,
-      descricao,
-      observacao,
-      status,
-      itensCount: Array.isArray(itens) ? itens.length : 0,
-      produtosSelecionadosCount: Array.isArray(produtosSelecionados) ? produtosSelecionados.length : 0,
-    });
+    
 
     if (!empresaId) {
       return res.status(401).json({ erro: "Acesso não autorizado." });
@@ -431,7 +421,6 @@ export async function atualizarMedicao(req, res) {
       dataUpdate.produto = { disconnect: true };
     }
     };
-    console.log("Update data keys:", Object.keys(dataUpdate));
     const medicaoAtualizada = await prisma.medicao.update({
       where: { id: Number(id) },
       data: dataUpdate,
@@ -440,13 +429,6 @@ export async function atualizarMedicao(req, res) {
         produto: true,
         endereco: true,
       },
-    });
-    console.log("Medicao atualizada:", {
-      id: medicaoAtualizada.id,
-      clienteId: medicaoAtualizada.clienteId,
-      enderecoId: medicaoAtualizada.enderecoId,
-      produtoId: medicaoAtualizada.produtoId,
-      status: medicaoAtualizada.status,
     });
     return res.json(medicaoAtualizada);
 

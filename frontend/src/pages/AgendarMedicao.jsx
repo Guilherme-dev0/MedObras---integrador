@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import "../styles/medicaoForm.css";
+import Swal from 'sweetalert2';
 
 export default function AgendarMedicao() {
   const [clientes, setClientes] = useState([]);
@@ -190,9 +191,27 @@ export default function AgendarMedicao() {
         dataAgendada,
         descricao,
       });
-
-      alert("Medição agendada com sucesso!");
-      window.location.href = "/medicoes";
+      
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Medição agendada com sucesso!'
+      });
+      
+      setTimeout(() => {
+        window.location.href = "/medicoes";
+      }, 1000);
     } catch (err) {
       console.error(err);
       const msg =

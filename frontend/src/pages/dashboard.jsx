@@ -72,6 +72,24 @@ export default function Dashboard() {
     return "";
   }
 
+  // Helper para exibir observação limpa (sem JSON) e com prioridade
+  function formatarObservacao(medicao) {
+    const texto = medicao.observacao || medicao.descricao || "";
+    
+    // Tenta detectar se é um JSON
+    if (texto.trim().startsWith("{") && texto.includes("obs")) {
+      try {
+        const parsed = JSON.parse(texto);
+        return parsed.obs || "Sem observação";
+      } catch (e) {
+        // Se falhar o parse, retorna o texto original limpo
+        return texto;
+      }
+    }
+    
+    return texto || "Medição sem descrição";
+  }
+
   return (
     <div className="dash-container">
       <h2 className="dash-title">Início</h2>
@@ -169,9 +187,9 @@ export default function Dashboard() {
 
             {recentes.map((m) => (
               <div key={m.id} className="recent-item">
-                <div>
+                <div className="recent-info">
                   <div className="recent-title">
-                    {m.descricao || "Medição sem descrição"}
+                    {formatarObservacao(m)}
                   </div>
                   <div className="recent-sub">Cliente: {m.cliente?.nome || "-"}</div>
                 </div>

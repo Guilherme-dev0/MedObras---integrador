@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "../styles/auth.css";
+import Swal from 'sweetalert2';
 
 import file from "../assets/icons/file.png";
 import lock from "../assets/icons/lock.png";
@@ -30,8 +31,26 @@ export default function Login() {
       localStorage.setItem("empresaNome", res.data.empresa.nome);
       localStorage.setItem("empresaEmail", res.data.empresa.email);
 
-      alert("Login realizado com sucesso.");
-      window.location.href = "/dashboard";
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Login realizado com sucesso.'
+      });
+      
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
     } catch (err) {
       const data = err.response?.data;
       const msg =
@@ -39,7 +58,12 @@ export default function Login() {
         data?.erro ||
         "Não foi possível entrar. Verifique seus dados e tente novamente.";
 
-      alert(msg);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro de Login',
+        text: msg,
+        confirmButtonColor: '#d33'
+      });
     } finally {
       setLoading(false);
     }

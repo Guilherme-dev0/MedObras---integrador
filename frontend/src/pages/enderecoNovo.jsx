@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../api";
 import "../styles/enderecoForm.css";
+import Swal from 'sweetalert2';
 
 export default function EnderecoNovo() {
   const [search, setSearch] = useState("");
@@ -8,6 +9,7 @@ export default function EnderecoNovo() {
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
 
   const [logradouro, setLogradouro] = useState("");
+  const [numero, setNumero] = useState("");
   const [bairro, setBairro] = useState("");
   const [cidade, setCidade] = useState("");
   const [cep, setCep] = useState("");
@@ -37,7 +39,7 @@ export default function EnderecoNovo() {
 
   async function salvarEndereco() {
     if (!clienteSelecionado) {
-      alert("Selecione um cliente!");
+      Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione um cliente!', confirmButtonColor: '#ffc107', confirmButtonText: 'OK' });
       return;
     }
 
@@ -45,16 +47,35 @@ export default function EnderecoNovo() {
       await api.post("/enderecos", {
         clienteId: clienteSelecionado.id,
         logradouro,
+        numero: numero || undefined,
         bairro,
         cidade,
         cep: String(cep).replace(/\D/g, ""),
       });
 
-      alert("Endereço cadastrado com sucesso!");
-      window.location.href = "/enderecos";
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Endereço cadastrado com sucesso!'
+      });
+      
+      setTimeout(() => {
+        window.location.href = "/enderecos";
+      }, 1000);
 
     } catch {
-      alert("Erro ao salvar endereço");
+      Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro ao salvar endereço', confirmButtonColor: '#d33' });
     }
   }
 
@@ -105,6 +126,15 @@ export default function EnderecoNovo() {
           type="text"
           value={logradouro}
           onChange={(e) => setLogradouro(e.target.value)}
+          className="form-input"
+        />
+      </div>
+      <div className="form-group">
+        <label>Número</label>
+        <input
+          type="text"
+          value={numero}
+          onChange={(e) => setNumero(e.target.value)}
           className="form-input"
         />
       </div>

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import "../styles/auth.css";
 import api from "../api";
 import logoMedobras from "../assets/icons/logoMedobras.jpeg";
+import Swal from 'sweetalert2';
 
 export default function ResetarSenha() {
   const token = useMemo(() => new URLSearchParams(window.location.search).get("token"), []);
@@ -13,17 +14,17 @@ export default function ResetarSenha() {
     e.preventDefault();
 
     if (!token) {
-      alert("Link inválido. Solicite uma nova recuperação de senha.");
+      Swal.fire({ icon: 'error', title: 'Link inválido', text: 'Solicite uma nova recuperação de senha.', confirmButtonColor: '#d33' });
       return;
     }
 
     if (novaSenha.length < 6) {
-      alert("A senha deve ter pelo menos 6 caracteres.");
+      Swal.fire({ icon: 'warning', title: 'Senha fraca', text: 'A senha deve ter pelo menos 6 caracteres.', confirmButtonColor: '#ffc107', confirmButtonText: 'OK' });
       return;
     }
 
     if (novaSenha !== confirmarSenha) {
-      alert("As senhas não conferem.");
+      Swal.fire({ icon: 'warning', title: 'Senhas divergentes', text: 'As senhas não conferem.', confirmButtonColor: '#ffc107', confirmButtonText: 'OK' });
       return;
     }
 
@@ -31,15 +32,29 @@ export default function ResetarSenha() {
     try {
       const res = await api.post("/auth/reset-password", { token, novaSenha });
       const msg = res.data?.message || "Senha atualizada com sucesso.";
-      alert(msg);
-      window.location.href = "/";
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Sucesso!',
+        text: msg,
+        confirmButtonColor: '#28a745'
+      }).then(() => {
+        window.location.href = "/";
+      });
+
     } catch (err) {
       const data = err.response?.data;
       const msg =
         data?.message ||
         data?.erro ||
         "Não foi possível redefinir a senha. Solicite um novo link e tente novamente.";
-      alert(msg);
+      
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: msg,
+        confirmButtonColor: '#d33'
+      });
     } finally {
       setSalvando(false);
     }

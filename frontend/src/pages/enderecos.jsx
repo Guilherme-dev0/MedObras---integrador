@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../api";
 import "../styles/enderecos.css";
+import Swal from 'sweetalert2';
 
 export default function Enderecos() {
   const [clienteNome, setClienteNome] = useState("");
@@ -8,6 +9,7 @@ export default function Enderecos() {
   const [sugestoes, setSugestoes] = useState([]);
 
   const [logradouro, setLogradouro] = useState("");
+  const [numero, setNumero] = useState("");
   const [bairro, setBairro] = useState("");
   const [cidade, setCidade] = useState("");
   const [cep, setCep] = useState("");
@@ -30,28 +32,49 @@ export default function Enderecos() {
   async function cadastrarEndereco(e) {
     e.preventDefault();
 
-    if (!clienteId) return alert("Selecione um cliente!");
+    if (!clienteId) {
+      Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione um cliente!', confirmButtonColor: '#ffc107', confirmButtonText: 'OK' });
+      return;
+    }
 
     try {
       await api.post("/enderecos", {
         clienteId,
         logradouro,
+        numero: numero || undefined,
         bairro,
         cidade,
         cep: String(cep).replace(/\D/g, ""),
       });
 
-      alert("Endereço cadastrado com sucesso!");
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Endereço cadastrado com sucesso!'
+      });
+      
       setClienteNome("");
       setClienteId(null);
       setSugestoes([]);
       setLogradouro("");
+      setNumero("");
       setBairro("");
       setCidade("");
       setCep("");
     } catch (error) {
       console.log(error);
-      alert("Erro ao cadastrar endereço.");
+      Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro ao cadastrar endereço.', confirmButtonColor: '#d33' });
     }
   }
 
@@ -93,6 +116,12 @@ export default function Enderecos() {
             className="input"
             value={logradouro}
             onChange={(e) => setLogradouro(e.target.value)}
+          />
+          <label>Número</label>
+          <input
+            className="input"
+            value={numero}
+            onChange={(e) => setNumero(e.target.value)}
           />
 
           <label>Bairro</label>

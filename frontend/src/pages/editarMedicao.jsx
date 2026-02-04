@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api";
 import "../styles/medicaoForm.css";
+import Swal from 'sweetalert2';
 
 export default function EditarMedicao() {
   const { id } = useParams();
@@ -79,7 +80,9 @@ export default function EditarMedicao() {
         setEnderecos(resEnd.data || []);
         const atual = (resEnd.data || []).find((e) => String(e.id) === String(med.enderecoId));
         setBuscaEndereco(
-          atual ? `${atual.logradouro}, ${atual.bairro} — ${atual.cidade}` : ""
+          atual
+            ? `${atual.logradouro}${atual.numero ? ", " + atual.numero : ""}, ${atual.bairro} — ${atual.cidade}`
+            : ""
         );
       } else {
         setEnderecos([]);
@@ -209,8 +212,26 @@ export default function EditarMedicao() {
 
       await api.put(`/medicoes/${id}`, payload);
 
-      alert("Medição atualizada com sucesso!");
-      window.location.href = "/medicoes";
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Medição atualizada com sucesso!'
+      });
+      
+      setTimeout(() => {
+        window.location.href = "/medicoes";
+      }, 1000);
     } catch (err) {
       const status = err?.response?.status;
       const data = err?.response?.data;
@@ -320,8 +341,19 @@ export default function EditarMedicao() {
                 <button
                   type="button"
                   className="mb-mini"
-                  onClick={() => {
-                    if (window.confirm("Tem certeza que deseja alterar o cliente desta medição? Isso limpará o endereço selecionado.")) {
+                  onClick={async () => {
+                    const result = await Swal.fire({
+                      title: 'Alterar cliente?',
+                      text: "Isso limpará o endereço selecionado.",
+                      icon: 'question',
+                      showCancelButton: true,
+                      confirmButtonColor: '#d33',
+                      cancelButtonColor: '#6c757d',
+                      confirmButtonText: 'Sim, alterar',
+                      cancelButtonText: 'Cancelar'
+                    });
+
+                    if (result.isConfirmed) {
                       setAllowEditCliente(true);
                       setClienteId("");
                       setBuscaCliente("");
@@ -400,7 +432,7 @@ export default function EditarMedicao() {
                     className="autocomplete-item"
                     onMouseDown={() => {
                       setEnderecoId(String(e.id));
-                      setBuscaEndereco(`${e.logradouro}, ${e.bairro} — ${e.cidade}`);
+                      setBuscaEndereco(`${e.logradouro}${e.numero ? ", " + e.numero : ""}, ${e.bairro} — ${e.cidade}`);
                       setShowSugEndereco(false);
                     }}
                   >
@@ -409,7 +441,9 @@ export default function EditarMedicao() {
                         <path d="M12 2C8.686 2 6 4.686 6 8c0 5.25 6 12 6 12s6-6.75 6-12c0-3.314-2.686-6-6-6zm0 8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="var(--accent-pink)" />
                       </svg>
                     </span>
-                    {e.logradouro}, {e.bairro} — {e.cidade}
+                    {e.logradouro}
+                    {e.numero ? `, ${e.numero}` : ""}
+                    , {e.bairro} — {e.cidade}
                   </button>
                 ))}
               </div>

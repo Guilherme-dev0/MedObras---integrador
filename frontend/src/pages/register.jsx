@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "../styles/register.css";
+import Swal from 'sweetalert2';
 
 // Ícones
 import user from "../assets/icons/user.jpg";
@@ -46,12 +47,24 @@ export default function Register() {
     const telefoneLimpo = telefone.replace(/\D/g, "");
 
     if (cnpjLimpo.length !== 14) {
-      alert("O CNPJ deve conter 14 números.");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Atenção',
+        text: 'O CNPJ deve conter 14 números.',
+        confirmButtonColor: '#ffc107',
+        confirmButtonText: 'OK'
+      });
       return;
     }
 
     if (telefoneLimpo.length !== 11) {
-      alert("O telefone deve conter 11 números.");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Atenção',
+        text: 'O telefone deve conter 11 números.',
+        confirmButtonColor: '#ffc107',
+        confirmButtonText: 'OK'
+      });
       return;
     }
 
@@ -65,14 +78,24 @@ export default function Register() {
         senha,
       });
 
-      alert(
-        'Empresa cadastrada com sucesso!\n\n📌 Sua licença é: ' + res.data.licenca + '\n\nGuarde-a! Você precisará para fazer o login.'
-      );
-
-      window.location.href = "/";
+      Swal.fire({
+        icon: 'success',
+        title: 'Empresa cadastrada com sucesso!',
+        html: `Sua licença é: <strong style="font-size: 24px; color: #007bff;">${res.data.licenca}</strong><br><br>📌 Guarde-a! Você precisará para fazer o login.`,
+        confirmButtonText: 'Ir para Login',
+        allowOutsideClick: false,
+        confirmButtonColor: '#28a745'
+      }).then(() => {
+        window.location.href = "/";
+      });
 
     } catch (err) {
-      alert("Erro ao cadastrar: " + (err.response?.data?.erro || ""));
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro ao cadastrar',
+        text: err.response?.data?.erro || "Erro desconhecido",
+        confirmButtonColor: '#d33'
+      });
     } finally {
       setLoading(false);
     }

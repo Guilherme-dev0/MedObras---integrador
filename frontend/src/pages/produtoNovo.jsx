@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../api";
 import "../styles/produtos.css";
+import Swal from 'sweetalert2';
 
 export default function ProdutoNovo() {
   const [nome, setNome] = useState("");
@@ -27,8 +28,26 @@ export default function ProdutoNovo() {
 
       await api.post("/produtos", payload);
 
-      alert("Produto cadastrado!");
-      window.location.href = "/produtos";
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Produto cadastrado!'
+      });
+      
+      setTimeout(() => {
+        window.location.href = "/produtos";
+      }, 1000);
     } catch (err) {
       console.error(err);
       setErro("Erro ao salvar produto.");

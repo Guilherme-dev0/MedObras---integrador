@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import "../styles/clientes.css";
+import Swal from 'sweetalert2';
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -21,14 +22,35 @@ export default function Clientes() {
   }
 
   async function excluirCliente(id) {
-    if (!window.confirm("Tem certeza que deseja excluir este cliente?")) return;
+    const result = await Swal.fire({
+      title: 'Tem certeza que deseja excluir este cliente?',
+      text: "Essa ação não poderá ser desfeita.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await api.delete(`/clientes/${id}`);
-      alert("Cliente excluído com sucesso!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Cliente excluído com sucesso!',
+        showConfirmButton: false,
+        timer: 1500
+      });
       carregar();
     } catch {
-      alert("Erro ao excluir cliente. Verifique vínculos existentes.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao excluir cliente. Verifique vínculos existentes.',
+        confirmButtonColor: '#d33'
+      });
     }
   }
 

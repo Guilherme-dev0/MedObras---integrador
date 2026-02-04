@@ -16,6 +16,7 @@ model Empresa {
   email     String    @unique
   senha     String
   licenca   String    @unique @db.VarChar(4)
+  createdAt DateTime  @default(now())
 
   clientes  Cliente[]
   produtos  Produto[]
@@ -31,6 +32,7 @@ model Cliente {
   cpf        String
   observacao String?
   empresaId  Int
+  createdAt  DateTime   @default(now())
 
   empresa    Empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   enderecos  Endereco[]
@@ -42,10 +44,12 @@ model Cliente {
 model Endereco {
   id         Int      @id @default(autoincrement())
   logradouro String
+  numero     String?
   bairro     String
   cidade     String
   cep        String
   clienteId  Int
+  createdAt  DateTime @default(now())
 
   cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   medicoes   Medicao[]
@@ -55,6 +59,7 @@ model Produto {
   id          Int       @id @default(autoincrement())
   nome        String
   empresaId   Int
+  createdAt   DateTime  @default(now())
 
   empresa     Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   medicoes    Medicao[]
@@ -72,7 +77,8 @@ model Medicao {
   altura       Float?
   largura      Float?
   observacao   String?
-  descricao    String?
+  descricao    String?    @db.Text
+  createdAt    DateTime   @default(now())
 
 
   cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -82,6 +88,7 @@ model Medicao {
 
   produto      Produto?  @relation(fields: [produtoId], references: [id])
 }
+
 model PasswordResetToken {
   id        Int      @id @default(autoincrement())
   tokenHash String   @unique

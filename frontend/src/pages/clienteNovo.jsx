@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../api";
 import "../styles/clienteForm.css";
+import Swal from 'sweetalert2';
 
 /* ===== Validação CPF (mantida) ===== */
 function validarCPF(cpf) {
@@ -28,10 +29,26 @@ function validarCPF(cpf) {
 
 function mascararCpf(valor) {
   let v = valor.replace(/\D/g, "");
+  v = v.slice(0, 11); // Garante max 11 dígitos
   v = v.replace(/(\d{3})(\d)/, "$1.$2");
   v = v.replace(/(\d{3})(\d)/, "$1.$2");
   v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   return v;
+}
+
+function mascararTelefone(valor) {
+  let v = String(valor || "").replace(/\D/g, "");
+  v = v.slice(0, 11);
+
+  if (v.length > 10) {
+    // Máscara para celular (11 dígitos): (00) 00000-0000
+    return v.replace(/^(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  } else {
+    // Máscara para fixo (10 dígitos) ou parcial: (00) 0000-0000
+    v = v.replace(/^(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+    return v;
+  }
 }
 
 export default function ClienteNovo() {
@@ -40,14 +57,6 @@ export default function ClienteNovo() {
   const [cpf, setCpf] = useState("");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
-
-  function mascararTelefone(valor) {
-    let v = String(valor || "").replace(/\D/g, "");
-    v = v.slice(0, 11);
-    v = v.replace(/(\d{2})(\d)/, "($1) $2");
-    v = v.replace(/(\d{5})(\d)/, "$1-$2");
-    return v;
-  }
 
   async function salvar(e) {
     e.preventDefault();
@@ -66,8 +75,26 @@ export default function ClienteNovo() {
         cpf: cpf.replace(/\D/g, ""),
       });
 
-      alert("Cliente cadastrado com sucesso!");
-      window.location.href = "/clientes";
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Cliente cadastrado com sucesso!'
+      });
+      
+      setTimeout(() => {
+        window.location.href = "/clientes";
+      }, 1000);
     } catch {
       setErro("❌ CPF já cadastrado.");
     } finally {

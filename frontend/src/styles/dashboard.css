@@ -181,15 +181,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 8px;
+  padding: 10px 12px;
   border-radius: 10px;
   background: #f9fafb;
 }
 
+.recent-info {
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+}
+
 .recent-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .recent-sub {

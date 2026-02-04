@@ -2,6 +2,53 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api";
 import "../styles/clienteForm.css";
+import Swal from 'sweetalert2';
+
+/* ===== Helpers de Validação e Máscara ===== */
+function validarCPF(cpf) {
+  cpf = cpf.replace(/\D/g, "");
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1+$/.test(cpf)) return false;
+
+  let soma = 0;
+  for (let i = 1; i <= 9; i++)
+    soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+
+  let resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf.substring(9, 10))) return false;
+
+  soma = 0;
+  for (let i = 1; i <= 10; i++)
+    soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+
+  return resto === parseInt(cpf.substring(10, 11));
+}
+
+function mascararCpf(valor) {
+  let v = valor.replace(/\D/g, "");
+  v = v.slice(0, 11);
+  v = v.replace(/(\d{3})(\d)/, "$1.$2");
+  v = v.replace(/(\d{3})(\d)/, "$1.$2");
+  v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  return v;
+}
+
+function mascararTelefone(valor) {
+  let v = String(valor || "").replace(/\D/g, "");
+  v = v.slice(0, 11);
+
+  if (v.length > 10) {
+    return v.replace(/^(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  } else {
+    v = v.replace(/^(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+    return v;
+  }
+}
 
 export default function ClienteEditar() {
   const { id } = useParams();
@@ -9,7 +56,6 @@ export default function ClienteEditar() {
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cpf, setCpf] = useState("");
-  const [cpfOriginal, setCpfOriginal] = useState("");
   const [erro, setErro] = useState("");
 
   const carregar = useCallback(async () => {
@@ -17,15 +63,13 @@ export default function ClienteEditar() {
       const res = await api.get(`/clientes`);
       const cliente = res.data.find((c) => c.id == id);
 
-      if (!cliente) return alert("Cliente não encontrado.");
+      if (!cliente) return Swal.fire({ icon: 'error', title: 'Erro', text: 'Cliente não encontrado.' });
 
       setNome(cliente.nome);
       setTelefone(cliente.telefone);
 
       const cpfMascarado = mascararCpf(cliente.cpf);
       setCpf(cpfMascarado);
-      setCpfOriginal(cpfMascarado);
-
     } catch (err) {
       console.error("Erro ao carregar cliente:", err);
     }
@@ -53,53 +97,31 @@ export default function ClienteEditar() {
         cpf: cpfLimpo,
       });
 
-      alert("Cliente atualizado com sucesso!");
-      window.location.href = "/clientes";
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      
+      Toast.fire({
+        icon: 'success',
+        title: 'Cliente atualizado com sucesso!'
+      });
+      
+      setTimeout(() => {
+        window.location.href = "/clientes";
+      }, 1000);
 
     } catch (err) {
       console.log(err);
       setErro("Erro ao atualizar cliente. Verifique CPF duplicado.");
     }
-  }
-
-  // ----------- Máscara automática de CPF -----------
-  function mascararCpf(valor) {
-    let v = valor.replace(/\D/g, "");
-    v = v.replace(/(\d{3})(\d)/, "$1.$2");
-    v = v.replace(/(\d{3})(\d)/, "$1.$2");
-    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    return v;
-  }
-
-  // ----------- Máscara automática de Telefone -----------
-  function mascararTelefone(valor) {
-    let v = String(valor || "").replace(/\D/g, "");
-    v = v.slice(0, 11);
-    v = v.replace(/(\d{2})(\d)/, "($1) $2");
-    v = v.replace(/(\d{5})(\d)/, "$1-$2");
-    return v;
-  }
-
-  // ----------- VALIDAÇÃO REAL DE CPF -----------
-  function validarCPF(cpf) {
-    cpf = cpf.replace(/\D/g, "");
-
-    if (cpf.length !== 11) return false;
-    if (/^(\d)\1{10}$/.test(cpf)) return false;
-
-    let soma = 0;
-    for (let i = 0; i < 9; i++) soma += cpf[i] * (10 - i);
-    let dig1 = (soma * 10) % 11;
-    if (dig1 === 10) dig1 = 0;
-    if (dig1 !== Number(cpf[9])) return false;
-
-    soma = 0;
-    for (let i = 0; i < 10; i++) soma += cpf[i] * (11 - i);
-    let dig2 = (soma * 10) % 11;
-    if (dig2 === 10) dig2 = 0;
-    if (dig2 !== Number(cpf[10])) return false;
-
-    return true;
   }
 
   return (
@@ -150,10 +172,12 @@ export default function ClienteEditar() {
 
                   const cpfLimpo = valor.replace(/\D/g, "");
                   
-                  // valida ao digitar
-                  if (cpfLimpo.length === 11 && !validarCPF(cpfLimpo)) {
-                    setErro("CPF inválido!");
-                    setCpf(cpfOriginal); // volta ao original
+                  if (cpfLimpo.length === 11) {
+                    if (!validarCPF(cpfLimpo)) {
+                      setErro("CPF inválido.");
+                    } else {
+                      setErro("");
+                    }
                   } else {
                     setErro("");
                   }

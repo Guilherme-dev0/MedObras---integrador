@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "../styles/medicoes.css";
 import api from "../api";
+import Swal from 'sweetalert2';
 
 export default function MedicoesConcluidas() {
   const [medicoes, setMedicoes] = useState([]);
@@ -355,7 +356,7 @@ export default function MedicoesConcluidas() {
                     <td>{m.cliente?.nome || "-"}</td>
                     <td>
                       {m.endereco
-                        ? `${m.endereco.logradouro}, ${m.endereco.bairro} – ${m.endereco.cidade}`
+                        ? `${m.endereco.logradouro}${m.endereco.numero ? ", " + m.endereco.numero : ""}, ${m.endereco.bairro} – ${m.endereco.cidade}`
                         : "-"}
                     </td>
                     <td>
@@ -515,7 +516,12 @@ export default function MedicoesConcluidas() {
 
                       setEditOpen(false);
                     } catch {
-                      alert("Erro ao salvar edição.");
+                      Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao salvar edição.',
+                        confirmButtonColor: '#d33'
+                      });
                     }
                   }}
                 >

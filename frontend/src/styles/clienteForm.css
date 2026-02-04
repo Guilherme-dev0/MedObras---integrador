@@ -110,12 +110,14 @@ h2 {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .campo {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 input {

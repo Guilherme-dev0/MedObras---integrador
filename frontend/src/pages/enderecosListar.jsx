@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import "../styles/enderecosListar.css";
+import Swal from 'sweetalert2';
 
 export default function EnderecosListar() {
   const [enderecos, setEnderecos] = useState([]);
@@ -21,14 +22,30 @@ export default function EnderecosListar() {
   }
 
   async function excluirEndereco(id) {
-    if (!confirm("Tem certeza que deseja excluir este endereço?")) return;
+    const result = await Swal.fire({
+      title: 'Tem certeza que deseja excluir este endereço?',
+      text: "Essa ação não poderá ser desfeita.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await api.delete(`/enderecos/${id}`);
-      alert("Endereço excluído com sucesso!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Endereço excluído com sucesso!',
+        showConfirmButton: false,
+        timer: 1500
+      });
       carregar();
     } catch (err) {
-      alert("Erro ao excluir endereço");
+      Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro ao excluir endereço', confirmButtonColor: '#d33' });
       console.log(err);
     }
   }
@@ -37,6 +54,7 @@ export default function EnderecosListar() {
     const texto = busca.toLowerCase();
     return (
       e.logradouro.toLowerCase().includes(texto) ||
+      (e.numero || "").toString().toLowerCase().includes(texto) ||
       e.bairro.toLowerCase().includes(texto) ||
       e.cidade.toLowerCase().includes(texto) ||
       e.cliente.nome.toLowerCase().includes(texto)
@@ -66,6 +84,7 @@ export default function EnderecosListar() {
             <tr>
               <th>Cliente</th>
               <th>Logradouro</th>
+              <th>Número</th>
               <th>Bairro</th>
               <th>Cidade</th>
               <th>CEP</th>
@@ -85,6 +104,7 @@ export default function EnderecosListar() {
                 <tr key={e.id}>
                   <td>{e.cliente?.nome}</td>
                   <td>{e.logradouro}</td>
+                  <td>{e.numero || "-"}</td>
                   <td>{e.bairro}</td>
                   <td>{e.cidade}</td>
                   <td>{e.cep}</td>

@@ -122,9 +122,6 @@ export async function buscarClientePorNome(req, res) {
   try {
     const { nome } = req.params;
 
-    console.log("🔎 Buscando por nome:", nome);
-    console.log("👤 Empresa logada ID:", req.user?.id);
-
     const termo = String(nome || "").trim();
     try {
       const clientes = await prisma.cliente.findMany({
@@ -143,10 +140,8 @@ export async function buscarClientePorNome(req, res) {
           cpf: true,
         },
       });
-      console.log("📌 Resultados (DB contains):", { termo, count: clientes.length });
       return res.json(clientes);
     } catch (dbErr) {
-      console.log("⚠️ Falha na busca DB contains, aplicando fallback de filtro em memória:", dbErr?.message);
       const todos = await prisma.cliente.findMany({
         where: { empresaId: req.user.id },
         select: { id: true, nome: true, telefone: true, cpf: true },
@@ -164,7 +159,6 @@ export async function buscarClientePorNome(req, res) {
           normalizar(c.cpf).includes(qn)
         );
       });
-      console.log("📌 Resultados (fallback memória):", { termo, count: filtrados.length });
       return res.json(filtrados);
     }
 

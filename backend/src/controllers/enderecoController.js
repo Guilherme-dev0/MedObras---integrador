@@ -4,13 +4,14 @@ import prisma from "../db/prisma.js"
 //  CRIAR ENDEREÇO
 
 export const criarEndereco = async (req, res) => {
-  const { clienteId, logradouro, bairro, cidade, cep } = req.body
+  const { clienteId, logradouro, numero, bairro, cidade, cep } = req.body
 
   try {
     const endereco = await prisma.endereco.create({
       data: {
         clienteId: Number(clienteId),
         logradouro,
+        ...(numero !== undefined && numero !== "" ? { numero } : {}),
         bairro,
         cidade,
         cep
@@ -100,6 +101,7 @@ export const listarEnderecosPorCliente = async (req, res) => {
       select: {
         id: true,
         logradouro: true,
+        numero: true,
         bairro: true,
         cidade: true,
         cep: true,
@@ -138,7 +140,7 @@ export const deletarEndereco = async (req, res) => {
 
 export const atualizarEndereco = async (req, res) => {
   const { id } = req.params;
-  const { logradouro, bairro, cidade, cep } = req.body;
+  const { logradouro, numero, bairro, cidade, cep } = req.body;
 
   try {
     const empresaId = req.user.id;
@@ -158,6 +160,7 @@ export const atualizarEndereco = async (req, res) => {
       where: { id: Number(id) },
       data: {
         ...(logradouro !== undefined ? { logradouro } : {}),
+        ...(numero !== undefined ? { numero } : {}),
         ...(bairro !== undefined ? { bairro } : {}),
         ...(cidade !== undefined ? { cidade } : {}),
         ...(cep !== undefined ? { cep } : {}),

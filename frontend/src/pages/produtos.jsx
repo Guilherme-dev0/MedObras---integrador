@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import "../styles/listas.css";
+import Swal from 'sweetalert2';
 
 export default function Produtos() {
   const [produtos, setProdutos] = useState([]);
@@ -31,15 +32,32 @@ export default function Produtos() {
 
   async function excluirProduto(p) {
     if (!p) return;
-    const ok = window.confirm(`Excluir produto\n\nTem certeza que deseja excluir ${p.nome}?`);
-    if (!ok) return;
+    const result = await Swal.fire({
+      title: 'Excluir produto',
+      text: `Tem certeza que deseja excluir ${p.nome}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       await api.delete(`/produtos/${p.id}`);
       carregar();
+      Swal.fire({
+        icon: 'success',
+        title: 'Produto excluído!',
+        showConfirmButton: false,
+        timer: 1500
+      });
     } catch (err) {
       console.error(err);
       setErro("Erro ao excluir o produto.");
-      alert("Erro ao excluir produto.");
+      Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro ao excluir produto.', confirmButtonColor: '#d33' });
     }
   }
 

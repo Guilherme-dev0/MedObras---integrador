@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../api";
 import "../styles/medicoes.css";
 import "../styles/medicaoForm.css";
+import Swal from 'sweetalert2';
 
 export default function Medicoes() {
   const [medicoes, setMedicoes] = useState([]);
@@ -30,13 +31,35 @@ export default function Medicoes() {
   }
 
   async function excluir(id) {
-    if (!window.confirm("Deseja realmente excluir esta medição?")) return;
+    const result = await Swal.fire({
+      title: 'Deseja excluir esta medição?',
+      text: "Essa ação não poderá ser desfeita.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await api.delete(`/medicoes/${id}`);
       carregar();
+      Swal.fire({
+        icon: 'success',
+        title: 'Medição excluída!',
+        showConfirmButton: false,
+        timer: 1500
+      });
     } catch {
-      alert("Erro ao excluir medição.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao excluir medição.',
+        confirmButtonColor: '#d33'
+      });
     }
   }
 
@@ -70,7 +93,13 @@ export default function Medicoes() {
         return a > 0 && l > 0;
       });
       if (!todosConcluidos) {
-        alert("Preencha as dimensões de todos os produtos para finalizar.");
+        Swal.fire({
+          icon: 'warning',
+          title: 'Atenção',
+          text: 'Preencha as dimensões de todos os produtos para finalizar.',
+          confirmButtonColor: '#ffc107',
+          confirmButtonText: 'OK'
+        });
         return;
       }
       const payloadProdutos = origemItens.map((it) => ({
@@ -93,11 +122,12 @@ export default function Medicoes() {
       const status = err?.response?.status;
       const data = err?.response?.data;
       console.error("Falha ao concluir medição:", { status, data, message: err?.message });
-      alert(
-        data?.message ||
-        data?.erro ||
-        "Erro ao concluir medição."
-      );
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: data?.message || data?.erro || "Erro ao concluir medição.",
+        confirmButtonColor: '#d33'
+      });
     }
   }
 
@@ -217,7 +247,7 @@ export default function Medicoes() {
                 return (
                   <tr key={m.id}>
                     <td>{m.cliente?.nome || "-"}</td>
-                    <td>{m.endereco?.logradouro || "-"}</td>
+                    <td>{m.endereco ? `${m.endereco.logradouro}${m.endereco.numero ? ', ' + m.endereco.numero : ''}` : "-"}</td>
                     <td>
                       {m.dataAgendada
                         ? `${new Date(m.dataAgendada).toLocaleDateString("pt-BR")} ${new Date(
