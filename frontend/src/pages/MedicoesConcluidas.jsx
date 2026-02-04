@@ -9,9 +9,10 @@ export default function MedicoesConcluidas() {
   const [ate, setAte] = useState("");
   const [tooltipOpenId, setTooltipOpenId] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState(null); // { medicaoId, itemId, nome }
+  const [editTarget] = useState(null); // { medicaoId, itemId, nome }
   const [editAltura, setEditAltura] = useState("");
   const [editLargura, setEditLargura] = useState("");
+  const [viewByMedicao, setViewByMedicao] = useState({});
 
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
@@ -321,7 +322,18 @@ export default function MedicoesConcluidas() {
                 const itensArea = Array.isArray(m.produtosSelecionados) && m.produtosSelecionados.length > 0
                   ? m.produtosSelecionados
                   : [];
-                const area = itensArea.length > 0
+                const viewing = viewByMedicao[m.id] || null;
+                const viewingItem = viewing
+                  ? itensArea.find((it) => it.id === viewing.itemId)
+                  : null;
+                const area = viewingItem
+                  ? (() => {
+                      const a = Number(viewingItem.altura || 0);
+                      const l = Number(viewingItem.largura || 0);
+                      const q = Number(viewingItem.quantidade || 1);
+                      return a > 0 && l > 0 && q > 0 ? a * l * q : null;
+                    })()
+                  : itensArea.length > 0
                   ? itensArea.reduce((s, it) => {
                       const a = Number(it.altura || 0);
                       const l = Number(it.largura || 0);
@@ -330,8 +342,8 @@ export default function MedicoesConcluidas() {
                       return s;
                     }, 0)
                   : null;
-                const altura = m.altura ? Number(m.altura) : null;
-                const largura = m.largura ? Number(m.largura) : null;
+                const altura = viewingItem ? Number(viewingItem.altura || 0) : null;
+                const largura = viewingItem ? Number(viewingItem.largura || 0) : null;
                 const itens = Array.isArray(m.produtosSelecionados) && m.produtosSelecionados.length > 0
                   ? m.produtosSelecionados
                   : (m?.produto ? [{ id: m.produto.id, nome: m.produto.nome || "", quantidade: 1 }] : []);
@@ -352,11 +364,12 @@ export default function MedicoesConcluidas() {
                           className="inline-badge with-icon"
                           onClick={() => setTooltipOpenId(tooltipOpenId === `p-${m.id}` ? null : `p-${m.id}`)}
                           onMouseEnter={() => setTooltipOpenId(`p-${m.id}`)}
-                          onMouseLeave={() => setTooltipOpenId(null)}
                           style={{ position: "relative", cursor: "pointer" }}
                         >
                           <span className="icon">📦</span>
-                          <span className="text">{totalItens} itens</span>
+                          <span className={`text ${viewingItem ? "viewing" : ""}`}>
+                            {viewingItem ? `Visualizando: ${viewingItem.nome || `Produto #${viewingItem.id}`}` : `${totalItens} itens`}
+                          </span>
                           {tooltipOpenId === `p-${m.id}` && (
                             <div className="tooltip-box">
                               {itens.map((it) => {
@@ -366,11 +379,11 @@ export default function MedicoesConcluidas() {
                                     type="button"
                                     className="tooltip-row button-like"
                                     onClick={() => {
-                                      setEditTarget({ medicaoId: m.id, itemId: it.id, nome: it.nome || `Produto #${it.id}` });
-                                      setEditAltura(it.altura != null ? String(it.altura) : "");
-                                      setEditLargura(it.largura != null ? String(it.largura) : "");
+                                      setViewByMedicao((prev) => ({
+                                        ...prev,
+                                        [m.id]: { itemId: it.id, nome: it.nome || `Produto #${it.id}` },
+                                      }));
                                       setTooltipOpenId(null);
-                                      setEditOpen(true);
                                     }}
                                   >
                                     <span className="tooltip-name">{it.nome || `Produto #${it.id}`}</span>
@@ -394,7 +407,6 @@ export default function MedicoesConcluidas() {
                           className="inline-badge with-icon"
                           onClick={() => setTooltipOpenId(tooltipOpenId === `o-${m.id}` ? null : `o-${m.id}`)}
                           onMouseEnter={() => setTooltipOpenId(`o-${m.id}`)}
-                          onMouseLeave={() => setTooltipOpenId(null)}
                           style={{ position: "relative", cursor: "pointer" }}
                         >
                           <span className="icon">💬</span>

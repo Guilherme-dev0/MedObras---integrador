@@ -89,7 +89,7 @@ export default function EditarMedicao() {
 
       // data/obs
       setDataAgendada(formatToDateTimeLocal(med.dataAgendada || med.data || ""));
-      setObservacao(med.descricao || med.observacao || "");
+      setObservacao(med.observacao || med.descricao || "");
 
       // ✅ carregar produtosSelecionados do JSON (se existir)
       if (Array.isArray(med.produtosSelecionados)) {
@@ -193,11 +193,18 @@ export default function EditarMedicao() {
         enderecoId: Number(enderecoId),
         dataAgendada,
         descricao: observacao,
+        observacao: observacao,
       };
 
       // ✅ envia lista completa via JSON
       payload.produtosSelecionados = Array.isArray(produtosSelecionados)
-        ? produtosSelecionados
+        ? produtosSelecionados.map((it) => ({
+            id: Number(it.id),
+            nome: String(it.nome || ""),
+            quantidade: Number(it.quantidade || 1),
+            altura: it.altura != null ? Number(it.altura) : null,
+            largura: it.largura != null ? Number(it.largura) : null,
+          }))
         : [];
 
       await api.put(`/medicoes/${id}`, payload);
@@ -205,7 +212,9 @@ export default function EditarMedicao() {
       alert("Medição atualizada com sucesso!");
       window.location.href = "/medicoes";
     } catch (err) {
-      console.log(err);
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      console.error("Falha ao salvar medição:", { status, data, message: err?.message });
       setErro(
         err.response?.data?.message ||
           err.response?.data?.erro ||

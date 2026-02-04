@@ -39,6 +39,7 @@ export default function ClienteEditar() {
     e.preventDefault();
 
     const cpfLimpo = cpf.replace(/\D/g, "");
+    const telLimpo = String(telefone).replace(/\D/g, "");
 
     if (!validarCPF(cpfLimpo)) {
       setErro("CPF inválido!");
@@ -48,7 +49,7 @@ export default function ClienteEditar() {
     try {
       await api.put(`/clientes/${id}`, {
         nome,
-        telefone,
+        telefone: telLimpo,
         cpf: cpfLimpo,
       });
 
@@ -67,6 +68,15 @@ export default function ClienteEditar() {
     v = v.replace(/(\d{3})(\d)/, "$1.$2");
     v = v.replace(/(\d{3})(\d)/, "$1.$2");
     v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    return v;
+  }
+
+  // ----------- Máscara automática de Telefone -----------
+  function mascararTelefone(valor) {
+    let v = String(valor || "").replace(/\D/g, "");
+    v = v.slice(0, 11);
+    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{5})(\d)/, "$1-$2");
     return v;
   }
 
@@ -117,8 +127,10 @@ export default function ClienteEditar() {
               <label>Telefone</label>
               <input 
                 type="text" 
+                maxLength="15"
+                placeholder="(00) 00000-0000"
                 value={telefone} 
-                onChange={(e) => setTelefone(e.target.value)}
+                onChange={(e) => setTelefone(mascararTelefone(e.target.value))}
                 required 
               />
             </div>

@@ -12,6 +12,11 @@ export default function EnderecoNovo() {
   const [cidade, setCidade] = useState("");
   const [cep, setCep] = useState("");
 
+  function mascararCep(valor) {
+    const v = String(valor || "").replace(/\D/g, "").slice(0, 8);
+    return v.length > 5 ? `${v.slice(0, 5)}-${v.slice(5)}` : v;
+  }
+
   async function buscarClientePornome(nome) {
     console.log("Digitou:", nome);
     setSearch(nome);
@@ -42,7 +47,7 @@ export default function EnderecoNovo() {
         logradouro,
         bairro,
         cidade,
-        cep,
+        cep: String(cep).replace(/\D/g, ""),
       });
 
       alert("Endereço cadastrado com sucesso!");
@@ -128,8 +133,10 @@ export default function EnderecoNovo() {
         <label>CEP</label>
         <input
           type="text"
+          maxLength="9"
+          placeholder="00000-000"
           value={cep}
-          onChange={(e) => setCep(e.target.value)}
+          onChange={(e) => setCep(mascararCep(e.target.value))}
           className="form-input"
         />
       </div>

@@ -38,7 +38,7 @@ export default function Enderecos() {
         logradouro,
         bairro,
         cidade,
-        cep,
+        cep: String(cep).replace(/\D/g, ""),
       });
 
       alert("Endereço cadastrado com sucesso!");
@@ -112,8 +112,14 @@ export default function Enderecos() {
           <label>CEP</label>
           <input
             className="input"
+            maxLength="9"
+            placeholder="00000-000"
             value={cep}
-            onChange={(e) => setCep(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+              const formatado = v.length > 5 ? `${v.slice(0, 5)}-${v.slice(5)}` : v;
+              setCep(formatado);
+            }}
           />
 
           <button className="btn-primary" type="submit">

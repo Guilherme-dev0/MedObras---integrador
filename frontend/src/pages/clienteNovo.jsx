@@ -41,6 +41,14 @@ export default function ClienteNovo() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
+  function mascararTelefone(valor) {
+    let v = String(valor || "").replace(/\D/g, "");
+    v = v.slice(0, 11);
+    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+    return v;
+  }
+
   async function salvar(e) {
     e.preventDefault();
     setErro("");
@@ -54,7 +62,7 @@ export default function ClienteNovo() {
       setLoading(true);
       await api.post("/clientes", {
         nome,
-        telefone,
+        telefone: String(telefone).replace(/\D/g, ""),
         cpf: cpf.replace(/\D/g, ""),
       });
 
@@ -96,8 +104,10 @@ export default function ClienteNovo() {
               <input
                 className="mb-input"
                 type="text"
+                maxLength="15"
+                placeholder="(00) 00000-0000"
                 value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
+                onChange={(e) => setTelefone(mascararTelefone(e.target.value))}
                 required
               />
             </div>

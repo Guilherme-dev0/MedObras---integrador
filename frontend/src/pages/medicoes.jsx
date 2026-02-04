@@ -80,14 +80,24 @@ export default function Medicoes() {
         altura: Number((itensEstado[it.id]?.altura ?? it.altura ?? 0)),
         largura: Number((itensEstado[it.id]?.largura ?? it.largura ?? 0)),
       }));
+      const obsTexto = medicaoSelecionada?.observacao || medicaoSelecionada?.descricao || "";
       await api.put(`/medicoes/${medicaoSelecionada.id}/concluir`, {
+        observacao: obsTexto,
+        descricao: obsTexto,
         produtosSelecionados: payloadProdutos,
       });
 
       setModalAberto(false);
       carregar();
-    } catch {
-      alert("Erro ao concluir medição.");
+    } catch (err) {
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      console.error("Falha ao concluir medição:", { status, data, message: err?.message });
+      alert(
+        data?.message ||
+        data?.erro ||
+        "Erro ao concluir medição."
+      );
     }
   }
 

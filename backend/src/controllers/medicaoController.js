@@ -243,18 +243,21 @@ export async function criarMedicao(req, res) {
     const produtoIdPrimario = Array.isArray(produtosSelecionados) && produtosSelecionados.length > 0
       ? Number(produtosSelecionados[0]?.id)
       : null;
+    const produtoPrimarioExiste = produtoIdPrimario
+      ? await prisma.produto.findFirst({ where: { id: produtoIdPrimario } })
+      : null;
 
     const medicao = await prisma.medicao.create({
       data: {
         cliente: { connect: { id: Number(clienteId) } },
         endereco: { connect: { id: Number(enderecoId) } },
         empresa: { connect: { id: empresaId } },
-        ...(produtoIdPrimario ? { produto: { connect: { id: produtoIdPrimario } } } : {}),
+        ...(produtoPrimarioExiste ? { produto: { connect: { id: produtoIdPrimario } } } : {}),
 
         dataAgendada: new Date(dataAgendada),
         descricao: Array.isArray(produtosSelecionados)
           ? JSON.stringify({
-              obs: descricao || null,
+              obs: String(descricao ?? ""),
               itens: produtosSelecionados.map((it) => ({
                 id: Number(it.id),
                 nome: String(it.nome || ""),
@@ -263,7 +266,7 @@ export async function criarMedicao(req, res) {
                 largura: it.largura != null ? Number(it.largura) : null,
               })),
             })
-          : (descricao || null),
+          : (descricao ?? null),
         status: "pendente",
       },
       include: {
@@ -275,6 +278,7 @@ export async function criarMedicao(req, res) {
     return res.status(201).json(medicao);
   } catch (err) {
     console.error("Erro ao cadastrar medição:", err);
+    console.error("Erro detalhado do Prisma:", err?.message);
     return res.status(500).json({ erro: "Erro ao criar medição" });
   }
 }
@@ -403,7 +407,7 @@ export async function atualizarMedicao(req, res) {
       ...(Array.isArray(produtosSelecionados)
         ? {
             descricao: JSON.stringify({
-              obs: (descricao !== undefined ? descricao : (observacao !== undefined ? observacao : null)) || null,
+              obs: String(observacao ?? descricao ?? ""),
               itens: produtosSelecionados.map((it) => ({
                 id: Number(it.id),
                 nome: String(it.nome || ""),
@@ -418,9 +422,14 @@ export async function atualizarMedicao(req, res) {
       ...(largura !== undefined ? { largura: largura ? Number(largura) : null } : {}),
       ...(altura !== undefined ? { altura: altura ? Number(altura) : null } : {}),
       ...(status ? { status } : {}),
-      ...(produtoIdPrimario
-        ? { produto: { connect: { id: produtoIdPrimario } } }
-        : { produto: { disconnect: true } }),
+  };
+  if (produtoIdPrimario) {
+    const primarioExiste = await prisma.produto.findFirst({ where: { id: produtoIdPrimario } });
+    if (primarioExiste) {
+      dataUpdate.produto = { connect: { id: produtoIdPrimario } };
+    } else {
+      dataUpdate.produto = { disconnect: true };
+    }
     };
     console.log("Update data keys:", Object.keys(dataUpdate));
     const medicaoAtualizada = await prisma.medicao.update({
@@ -443,6 +452,7 @@ export async function atualizarMedicao(req, res) {
 
   } catch (err) {
     console.error("Erro ao atualizar medição:", err);
+    console.error("Erro detalhado do Prisma:", err?.message);
     return res.status(500).json({ erro: "Erro ao atualizar medição" });
   }
 }
@@ -515,9 +525,9 @@ export async function concluirMedicao(req, res) {
       data: {
         largura: largura ? Number(largura) : null,
         altura: altura ? Number(altura) : null,
-        observacao: observacao || null,
+        observacao: (observacao !== undefined ? (observacao || "") : null),
         descricao: JSON.stringify({
-          obs: observacao || null,
+          obs: String(observacao ?? ""),
           itens: Array.isArray(produtosSelecionados)
             ? produtosSelecionados.map((it) => ({
                 id: Number(it.id),
@@ -535,6 +545,7 @@ export async function concluirMedicao(req, res) {
     return res.json(medicao);
   } catch (err) {
     console.error("Erro ao concluir medição:", err);
+    console.error("Erro detalhado do Prisma:", err?.message);
     return res.status(400).json({ erro: "Erro ao concluir medição" });
   }
 }

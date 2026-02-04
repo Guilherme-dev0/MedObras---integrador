@@ -170,12 +170,22 @@ export default function AgendarMedicao() {
 
     try {
       setLoading(true);
+      const itensValidos = (Array.isArray(produtosSelecionados) ? produtosSelecionados : []).map(
+        (it) => ({
+          id: Number(it.id),
+          nome: String(it.nome || ""),
+          quantidade: Number(it.quantidade || 1),
+          altura: it.altura != null ? Number(it.altura) : null,
+          largura: it.largura != null ? Number(it.largura) : null,
+        })
+      );
       await api.post("/medicoes", {
         clienteId: Number(clienteId),
         enderecoId: Number(enderecoId),
         dataAgendada,
         descricao: observacao,
-        produtosSelecionados: Array.isArray(produtosSelecionados) ? produtosSelecionados : [],
+        observacao: observacao || "",
+        produtosSelecionados: itensValidos,
       });
       alert("Medição agendada com sucesso!");
       window.location.href = "/medicoes";
