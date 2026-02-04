@@ -1,5 +1,63 @@
 import prisma from "../db/prisma.js";
 
+function normalizeProdutosSelecionadosFromDescricao(m) {
+  let produtosSelecionados = [];
+  let obsTexto = m.observacao || m.descricao || null;
+  if (typeof m.descricao === "string") {
+    try {
+      const parsed = JSON.parse(m.descricao);
+      if (parsed && Array.isArray(parsed.itens)) {
+        produtosSelecionados = parsed.itens.map((it) => ({
+          id: Number(it.id),
+          nome: String(it.nome || ""),
+          quantidade: it.quantidade != null ? Number(it.quantidade) : 1,
+          altura: it.altura != null ? Number(it.altura) : null,
+          largura: it.largura != null ? Number(it.largura) : null,
+        }));
+      }
+      if (parsed && parsed.obs != null) {
+        obsTexto = String(parsed.obs);
+      }
+    } catch {}
+    if (produtosSelecionados.length === 0) {
+      const parts = m.descricao.split("|");
+      const obsPart = parts.find((p) => p.startsWith("obs="));
+      const itemsPart = parts.find((p) => p.startsWith("items="));
+      if (obsPart) obsTexto = obsPart.slice(4);
+      if (itemsPart) {
+        const list = itemsPart.slice(6).split(",").filter(Boolean);
+        produtosSelecionados = list.map((pair) => {
+          const [idStr, qStr] = pair.split(":");
+          return {
+            id: Number(idStr),
+            nome: "",
+            quantidade: qStr != null ? Number(qStr) : 1,
+            altura: null,
+            largura: null,
+          };
+        });
+      }
+    }
+  }
+  return { ...m, produtosSelecionados, descricao: obsTexto };
+}
+
+function buildCompactDescricao(obs, itens) {
+  const obsTxt = obs ? `obs=${String(obs)}` : "";
+  const itemsTxt = Array.isArray(itens) && itens.length > 0
+    ? `items=${itens.map((it) => `${Number(it.id)}:${Number(it.quantidade || 1)}`).join(",")}`
+    : "";
+  const joined = [obsTxt, itemsTxt].filter(Boolean).join("|");
+  if (joined.length <= 191) return joined;
+  let acc = obsTxt ? `${obsTxt}|items=` : "items=";
+  for (const it of itens) {
+    const frag = `${Number(it.id)}:${Number(it.quantidade || 1)},`;
+    if ((acc + frag).length > 191) break;
+    acc += frag;
+  }
+  return acc.replace(/,$/, "");
+}
+
 /* ============================================================
    LISTAR TODAS AS MEDIÇÕES
    ============================================================ */
@@ -11,7 +69,7 @@ export async function listarMedicoes(req, res) {
       return res.status(401).json({ erro: "Acesso não autorizado." });
     }
 
-    const medicoes = await prisma.medicao.findMany({
+    const medicoesRaw = await prisma.medicao.findMany({
       where: { empresaId },
       include: {
         cliente: true,
@@ -21,6 +79,7 @@ export async function listarMedicoes(req, res) {
       orderBy: { id: "desc" },
     });
 
+    const medicoes = (medicoesRaw || []).map(normalizeProdutosSelecionadosFromDescricao);
     return res.json(medicoes);
   } catch (err) {
     console.error("Erro ao listar medições:", err);
@@ -39,7 +98,7 @@ export async function listarPendentes(req, res) {
       return res.status(401).json({ erro: "Acesso não autorizado." });
     }
 
-    const medicoes = await prisma.medicao.findMany({
+    const medicoesRaw = await prisma.medicao.findMany({
       where: {
         empresaId,
         status: "pendente",
@@ -52,6 +111,7 @@ export async function listarPendentes(req, res) {
       orderBy: { id: "desc" },
     });
 
+    const medicoes = (medicoesRaw || []).map(normalizeProdutosSelecionadosFromDescricao);
     return res.json(medicoes);
   } catch (err) {
     console.error("Erro ao listar medições pendentes:", err);
@@ -102,7 +162,6 @@ export async function listarConcluidas(req, res) {
               { endereco: { logradouro: { contains: q } } },
               { endereco: { bairro: { contains: q } } },
               { endereco: { cidade: { contains: q } } },
-              { produto: { nome: { contains: q } } },
             ],
           }
         : {}),
@@ -116,7 +175,7 @@ export async function listarConcluidas(req, res) {
         : {}),
     };
 
-    const medicoes = await prisma.medicao.findMany({
+    const medicoesRaw = await prisma.medicao.findMany({
       where,
       include: {
         cliente: true,
@@ -126,6 +185,7 @@ export async function listarConcluidas(req, res) {
       orderBy: { id: "desc" },
     });
 
+    const medicoes = (medicoesRaw || []).map(normalizeProdutosSelecionadosFromDescricao);
     return res.json(medicoes);
   } catch (err) {
     console.error("Erro ao listar medições concluídas:", err);
@@ -142,7 +202,7 @@ export async function listarConcluidas(req, res) {
    ============================================================ */
 export async function criarMedicao(req, res) {
   try {
-    const { clienteId, enderecoId, produtoId, dataAgendada, descricao } = req.body;
+    const { clienteId, enderecoId, dataAgendada, descricao, produtosSelecionados } = req.body;
 
     if (!clienteId || !enderecoId || !dataAgendada) {
       return res.status(400).json({
@@ -179,23 +239,36 @@ export async function criarMedicao(req, res) {
       return res.status(400).json({ erro: "Endereço inválido para este cliente." });
     }
 
+    // compatibilidade com schema atual (apenas um produto opcional na Medição)
+    const produtoIdPrimario = Array.isArray(produtosSelecionados) && produtosSelecionados.length > 0
+      ? Number(produtosSelecionados[0]?.id)
+      : null;
+
     const medicao = await prisma.medicao.create({
       data: {
         cliente: { connect: { id: Number(clienteId) } },
         endereco: { connect: { id: Number(enderecoId) } },
         empresa: { connect: { id: empresaId } },
-
-        // produto é opcional
-        ...(produtoId ? { produto: { connect: { id: Number(produtoId) } } } : {}),
+        ...(produtoIdPrimario ? { produto: { connect: { id: produtoIdPrimario } } } : {}),
 
         dataAgendada: new Date(dataAgendada),
-        descricao: descricao || null,
+        descricao: Array.isArray(produtosSelecionados)
+          ? JSON.stringify({
+              obs: descricao || null,
+              itens: produtosSelecionados.map((it) => ({
+                id: Number(it.id),
+                nome: String(it.nome || ""),
+                quantidade: it.quantidade != null ? Number(it.quantidade) : 1,
+                altura: it.altura != null ? Number(it.altura) : null,
+                largura: it.largura != null ? Number(it.largura) : null,
+              })),
+            })
+          : (descricao || null),
         status: "pendente",
       },
       include: {
         cliente: true,
         endereco: true,
-        produto: true,
       },
     });
 
@@ -225,7 +298,8 @@ export async function buscarMedicaoPorId(req, res) {
       include: {
         cliente: true,
         endereco: true,
-        produto: true,
+      produto: true,
+      // removido include de itens por incompatibilidade com o schema atual
       },
     });
 
@@ -233,7 +307,8 @@ export async function buscarMedicaoPorId(req, res) {
       return res.status(404).json({ erro: "Medição não encontrada." });
     }
 
-    return res.json(medicao);
+    const resposta = normalizeProdutosSelecionadosFromDescricao(medicao);
+    return res.json(resposta);
   } catch (err) {
     console.error("Erro ao buscar medição:", err);
     return res.status(500).json({ erro: "Erro ao buscar medição" });
@@ -251,14 +326,27 @@ export async function atualizarMedicao(req, res) {
     const {
       clienteId,
       enderecoId,
-      produtoId, // opcional
       dataAgendada,
       descricao, // opcional
       largura, // opcional
       altura, // opcional
       observacao, // opcional (se você usar)
       status, // opcional
+      itens, // opcional: substitui lista de itens
+      produtosSelecionados, // opcional: compatibilidade com UI atual (escolhe 1º como principal)
     } = req.body;
+
+    console.log("Atualizar Medição payload:", {
+      id,
+      clienteId,
+      enderecoId,
+      dataAgendada,
+      descricao,
+      observacao,
+      status,
+      itensCount: Array.isArray(itens) ? itens.length : 0,
+      produtosSelecionadosCount: Array.isArray(produtosSelecionados) ? produtosSelecionados.length : 0,
+    });
 
     if (!empresaId) {
       return res.status(401).json({ erro: "Acesso não autorizado." });
@@ -288,36 +376,71 @@ export async function atualizarMedicao(req, res) {
       }
     }
 
+    // substituição de itens (se enviados)
+    if (Array.isArray(itens)) {
+      await prisma.itemMedicao.deleteMany({ where: { medicaoId: Number(id) } });
+      if (itens.length > 0) {
+        await prisma.itemMedicao.createMany({
+          data: itens.map((it) => ({
+            medicaoId: Number(id),
+            produtoId: Number(it.produtoId),
+            quantidade: it.quantidade ? Number(it.quantidade) : 1,
+          })),
+        });
+      }
+    }
+
+    // produto primário via produtosSelecionados (compatibilidade com schema atual)
+    const produtoIdPrimario =
+      Array.isArray(produtosSelecionados) && produtosSelecionados.length > 0
+        ? Number(produtosSelecionados[0]?.id)
+        : null;
+
+    const dataUpdate = {
+      ...(clienteId ? { cliente: { connect: { id: Number(clienteId) } } } : {}),
+      ...(enderecoId ? { endereco: { connect: { id: Number(enderecoId) } } } : {}),
+      ...(dataAgendada ? { dataAgendada: new Date(dataAgendada) } : {}),
+      ...(Array.isArray(produtosSelecionados)
+        ? {
+            descricao: JSON.stringify({
+              obs: (descricao !== undefined ? descricao : (observacao !== undefined ? observacao : null)) || null,
+              itens: produtosSelecionados.map((it) => ({
+                id: Number(it.id),
+                nome: String(it.nome || ""),
+                quantidade: it.quantidade != null ? Number(it.quantidade) : 1,
+                altura: it.altura != null ? Number(it.altura) : null,
+                largura: it.largura != null ? Number(it.largura) : null,
+              })),
+            }),
+          }
+        : (descricao !== undefined ? { descricao: descricao || null } : {})),
+      ...(observacao !== undefined ? { observacao: observacao || null } : {}),
+      ...(largura !== undefined ? { largura: largura ? Number(largura) : null } : {}),
+      ...(altura !== undefined ? { altura: altura ? Number(altura) : null } : {}),
+      ...(status ? { status } : {}),
+      ...(produtoIdPrimario
+        ? { produto: { connect: { id: produtoIdPrimario } } }
+        : { produto: { disconnect: true } }),
+    };
+    console.log("Update data keys:", Object.keys(dataUpdate));
     const medicaoAtualizada = await prisma.medicao.update({
       where: { id: Number(id) },
-      data: {
-        ...(clienteId ? { clienteId: Number(clienteId) } : {}),
-        ...(enderecoId ? { enderecoId: Number(enderecoId) } : {}),
-
-  
-        ...(produtoId === "" || produtoId === null
-          ? { produtoId: null }
-          : produtoId
-          ? { produtoId: Number(produtoId) }
-          : {}),
-
-        ...(dataAgendada ? { dataAgendada: new Date(dataAgendada) } : {}),
-        ...(descricao !== undefined ? { descricao: descricao || null } : {}),
-        ...(observacao !== undefined ? { observacao: observacao || null } : {}),
-
-        ...(largura !== undefined ? { largura: largura ? Number(largura) : null } : {}),
-        ...(altura !== undefined ? { altura: altura ? Number(altura) : null } : {}),
-
-        ...(status ? { status } : {}),
-      },
+      data: dataUpdate,
       include: {
         cliente: true,
-        endereco: true,
         produto: true,
+        endereco: true,
       },
     });
-
+    console.log("Medicao atualizada:", {
+      id: medicaoAtualizada.id,
+      clienteId: medicaoAtualizada.clienteId,
+      enderecoId: medicaoAtualizada.enderecoId,
+      produtoId: medicaoAtualizada.produtoId,
+      status: medicaoAtualizada.status,
+    });
     return res.json(medicaoAtualizada);
+
   } catch (err) {
     console.error("Erro ao atualizar medição:", err);
     return res.status(500).json({ erro: "Erro ao atualizar medição" });
@@ -367,7 +490,7 @@ export async function atualizarStatus(req, res) {
 export async function concluirMedicao(req, res) {
   try {
     const { id } = req.params;
-    const { largura, altura, observacao } = req.body;
+    const { largura, altura, observacao, produtosSelecionados } = req.body;
     const empresaId = req.user?.id;
 
     if (!empresaId) {
@@ -382,12 +505,29 @@ export async function concluirMedicao(req, res) {
       return res.status(404).json({ erro: "Medição não encontrada." });
     }
 
+    const descricaoPersistida =
+      Array.isArray(produtosSelecionados) && produtosSelecionados.length > 0
+        ? JSON.stringify({ itens: produtosSelecionados })
+        : undefined;
+
     const medicao = await prisma.medicao.update({
       where: { id: Number(id) },
       data: {
         largura: largura ? Number(largura) : null,
         altura: altura ? Number(altura) : null,
         observacao: observacao || null,
+        descricao: JSON.stringify({
+          obs: observacao || null,
+          itens: Array.isArray(produtosSelecionados)
+            ? produtosSelecionados.map((it) => ({
+                id: Number(it.id),
+                nome: String(it.nome || ""),
+                quantidade: it.quantidade != null ? Number(it.quantidade) : 1,
+                altura: it.altura != null ? Number(it.altura) : null,
+                largura: it.largura != null ? Number(it.largura) : null,
+              }))
+            : [],
+        }),
         status: "concluída",
       },
     });

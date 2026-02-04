@@ -13,25 +13,46 @@ export default function EditarMedicao() {
   const [clienteId, setClienteId] = useState("");
   const [enderecoId, setEnderecoId] = useState("");
 
-  // ✅ suporta 1 produto OU vários
-  const [produtoId, setProdutoId] = useState(""); // modo simples
-  const [produtoIds, setProdutoIds] = useState([]); // modo múltiplo
+  // ✅ múltiplos produtos via JSON
+  const [produtosSelecionados, setProdutosSelecionados] = useState([]);
+  const [produtoSelecionadoId, setProdutoSelecionadoId] = useState("");
+  const [quantidade, setQuantidade] = useState("");
 
   const [dataAgendada, setDataAgendada] = useState("");
   const [observacao, setObservacao] = useState("");
 
-  // ✅ novos campos: altura e largura
-  const [altura, setAltura] = useState("");
-  const [largura, setLargura] = useState("");
+  const [isItemsExpanded, setIsItemsExpanded] = useState(false);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editAltura, setEditAltura] = useState("");
+  const [editLargura, setEditLargura] = useState("");
 
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
-  const [modoMultiplo, setModoMultiplo] = useState(false);
+
+  const [buscaCliente, setBuscaCliente] = useState("");
+  const [showSugCliente, setShowSugCliente] = useState(false);
+  const [buscaEndereco, setBuscaEndereco] = useState("");
+  const [showSugEndereco, setShowSugEndereco] = useState(false);
+  const [buscaProduto, setBuscaProduto] = useState("");
+  const [showSugProduto, setShowSugProduto] = useState(false);
+  const [allowEditCliente, setAllowEditCliente] = useState(false);
+  const totalDistintos = useMemo(() => {
+    return Array.isArray(produtosSelecionados) ? produtosSelecionados.length : 0;
+  }, [produtosSelecionados]);
+  const totalGeral = useMemo(() => {
+    return Array.isArray(produtosSelecionados)
+      ? produtosSelecionados.reduce((acc, it) => acc + Number(it.quantidade || 0), 0)
+      : 0;
+  }, [produtosSelecionados]);
 
   useEffect(() => {
     carregarTudo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    setEnderecoId("");
+    setBuscaEndereco("");
+  }, [clienteId]);
 
   async function carregarTudo() {
     try {
@@ -50,11 +71,16 @@ export default function EditarMedicao() {
       // cliente / endereco
       const cid = String(med.clienteId || "");
       setClienteId(cid);
+      setBuscaCliente(med?.cliente?.nome ? String(med.cliente.nome) : "");
 
       // carrega endereços do cliente
       if (cid) {
         const resEnd = await api.get(`/enderecos/cliente/${cid}`);
         setEnderecos(resEnd.data || []);
+        const atual = (resEnd.data || []).find((e) => String(e.id) === String(med.enderecoId));
+        setBuscaEndereco(
+          atual ? `${atual.logradouro}, ${atual.bairro} — ${atual.cidade}` : ""
+        );
       } else {
         setEnderecos([]);
       }
@@ -65,22 +91,27 @@ export default function EditarMedicao() {
       setDataAgendada(formatToDateTimeLocal(med.dataAgendada || med.data || ""));
       setObservacao(med.descricao || med.observacao || "");
 
-      // altura/largura (se existir no backend)
-      setAltura(med.altura != null ? String(med.altura) : "");
-      setLargura(med.largura != null ? String(med.largura) : "");
-
-      // ✅ condição: se existir array de produtos, ativa modo múltiplo
-      if (Array.isArray(med.produtos) && med.produtos.length > 0) {
-        setModoMultiplo(true);
-        // tenta pegar ids em formatos diferentes
-        const ids = med.produtos
-          .map((p) => p.produtoId ?? p.id ?? p?.produto?.id)
-          .filter(Boolean)
-          .map(String);
-        setProdutoIds(ids);
+      // ✅ carregar produtosSelecionados do JSON (se existir)
+      if (Array.isArray(med.produtosSelecionados)) {
+        setProdutosSelecionados(
+          med.produtosSelecionados.map((it) => ({
+            id: Number(it.id),
+            nome: String(it.nome || ""),
+            quantidade: Number(it.quantidade || 1),
+            altura: it.altura != null ? Number(it.altura) : null,
+            largura: it.largura != null ? Number(it.largura) : null,
+          }))
+        );
+      } else if (med.produto) {
+        setProdutosSelecionados([
+          {
+            id: Number(med.produto.id),
+            nome: String(med.produto.nome || ""),
+            quantidade: 1,
+          },
+        ]);
       } else {
-        setModoMultiplo(false);
-        setProdutoId(String(med.produtoId || ""));
+        setProdutosSelecionados([]);
       }
     } catch {
       setErro("Não foi possível carregar a medição para edição.");
@@ -106,24 +137,50 @@ export default function EditarMedicao() {
     [clientes, clienteId]
   );
 
+  function normalize(s) {
+    return String(s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  }
+
+  const clientesFiltrados = useMemo(() => {
+    const termo = normalize(buscaCliente);
+    if (!termo) return clientes;
+    return clientes.filter((c) => {
+      const nome = normalize(c.nome);
+      const cpf = normalize(c.cpf || "");
+      return nome.includes(termo) || cpf.includes(termo);
+    });
+  }, [clientes, buscaCliente]);
+
+  const enderecosFiltrados = useMemo(() => {
+    const termo = normalize(buscaEndereco);
+    if (!termo) return enderecos;
+    return enderecos.filter((e) => {
+      const txt = normalize(`${e.logradouro} ${e.bairro} ${e.cidade}`);
+      return txt.includes(termo);
+    });
+  }, [enderecos, buscaEndereco]);
+
+  const produtosFiltrados = useMemo(() => {
+    const termo = normalize(buscaProduto);
+    if (!termo) return produtos;
+    return produtos.filter((p) => normalize(p.nome).includes(termo));
+  }, [produtos, buscaProduto]);
+  const enderecoSelecionado = useMemo(
+    () => enderecos.find((e) => String(e.id) === String(enderecoId)),
+    [enderecos, enderecoId]
+  );
+
   async function salvar(e) {
     e.preventDefault();
+    if (loading) return;
     setErro("");
+    console.log("Form disparado por:", e.nativeEvent?.submitter);
 
     if (!clienteId || !enderecoId || !dataAgendada) {
       setErro("Preencha cliente, endereço e data/hora.");
-      return;
-    }
-
-    // valida altura/largura se preenchido
-    const alturaNum = altura === "" ? null : Number(String(altura).replace(",", "."));
-    const larguraNum = largura === "" ? null : Number(String(largura).replace(",", "."));
-    if (alturaNum != null && (isNaN(alturaNum) || alturaNum <= 0)) {
-      setErro("Altura inválida.");
-      return;
-    }
-    if (larguraNum != null && (isNaN(larguraNum) || larguraNum <= 0)) {
-      setErro("Largura inválida.");
       return;
     }
 
@@ -136,16 +193,12 @@ export default function EditarMedicao() {
         enderecoId: Number(enderecoId),
         dataAgendada,
         descricao: observacao,
-        altura: alturaNum,
-        largura: larguraNum,
       };
 
-      // ✅ se múltiplo, envia lista; se simples, envia produtoId
-      if (modoMultiplo) {
-        payload.produtoIds = produtoIds.map(Number); // backend precisa aceitar isso
-      } else {
-        payload.produtoId = produtoId ? Number(produtoId) : null;
-      }
+      // ✅ envia lista completa via JSON
+      payload.produtosSelecionados = Array.isArray(produtosSelecionados)
+        ? produtosSelecionados
+        : [];
 
       await api.put(`/medicoes/${id}`, payload);
 
@@ -163,12 +216,27 @@ export default function EditarMedicao() {
     }
   }
 
-  function toggleProdutoMultiplo(idProduto) {
-    setProdutoIds((prev) => {
-      const idStr = String(idProduto);
-      if (prev.includes(idStr)) return prev.filter((x) => x !== idStr);
-      return [...prev, idStr];
+  function adicionarProduto() {
+    const idNum = Number(produtoSelecionadoId);
+    const qtdNum = Number(quantidade);
+    if (!idNum || isNaN(qtdNum) || qtdNum <= 0) return;
+    const prod = produtos.find((p) => Number(p.id) === idNum);
+    const item = {
+      id: idNum,
+      nome: prod?.nome || "",
+      quantidade: qtdNum,
+    };
+    setProdutosSelecionados((prev) => {
+      const idx = prev.findIndex((x) => Number(x.id) === idNum);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], quantidade: qtdNum };
+        return next;
+      }
+      return [...prev, item];
     });
+    setProdutoSelecionadoId("");
+    setQuantidade("");
   }
 
   return (
@@ -192,7 +260,6 @@ export default function EditarMedicao() {
         </button>
       </div>
 
-      {/* CARDS RESUMO */}
       <div className="mb-cards">
         <div className="mb-card">
           <div className="mb-card-label">Cliente</div>
@@ -200,16 +267,16 @@ export default function EditarMedicao() {
             {clienteSelecionado ? clienteSelecionado.nome : "—"}
           </div>
           <div className="mb-card-sub">
-            {modoMultiplo ? "Modo múltiplos produtos" : "Modo produto único"}
+            {Array.isArray(produtosSelecionados) && produtosSelecionados.length > 0
+              ? `Produtos distintos selecionados: ${totalDistintos}, total de produtos: ${totalGeral}`
+              : "Nenhum produto selecionado"}
           </div>
         </div>
 
         <div className="mb-card">
-          <div className="mb-card-label">Área estimada</div>
-          <div className="mb-card-value">
-            {calcArea(altura, largura) ? `${calcArea(altura, largura)} m²` : "—"}
-          </div>
-          <div className="mb-card-sub">Baseado em altura × largura</div>
+          <div className="mb-card-label">Endereço</div>
+          <div className="mb-card-value">{enderecoSelecionado ? enderecoSelecionado.logradouro : "—"}</div>
+          <div className="mb-card-sub">Endereços disponíveis ({enderecos.length})</div>
         </div>
       </div>
 
@@ -218,112 +285,75 @@ export default function EditarMedicao() {
         {erro && <div className="mb-alert">{erro}</div>}
 
         <form onSubmit={salvar}>
-          <div className="mb-grid">
+          <div className="mb-row-two">
             <div className="mb-field">
               <label>Cliente</label>
-              <select
+              <input
                 className="mb-input"
-                value={clienteId}
+                placeholder="Digite nome, telefone ou CPF..."
+                value={buscaCliente}
                 onChange={(e) => {
-                  const novo = e.target.value;
-                  setClienteId(novo);
-                  setEnderecoId("");
-                  carregarEnderecos(novo);
+                  const v = e.target.value;
+                  setBuscaCliente(v);
+                  setShowSugCliente(true);
+                }}
+                onFocus={() => {
+                  if (allowEditCliente) setShowSugCliente(true);
                 }}
                 required
-              >
-                <option value="">Selecione...</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                    {c.cpf ? ` (${c.cpf})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-field">
-              <label>Endereço</label>
-              <select
-                className="mb-input"
-                value={enderecoId}
-                onChange={(e) => setEnderecoId(e.target.value)}
-                required
-                disabled={!clienteId}
-              >
-                <option value="">
-                  {!clienteId ? "Selecione um cliente primeiro..." : "Selecione..."}
-                </option>
-                {enderecos.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.logradouro}, {e.bairro} — {e.cidade}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* ✅ PRODUTOS */}
-            {!modoMultiplo ? (
-              <div className="mb-field">
-                <label>Produto</label>
-                <select
-                  className="mb-input"
-                  value={produtoId}
-                  onChange={(e) => setProdutoId(e.target.value)}
+                readOnly={!allowEditCliente}
+                style={{
+                  background: allowEditCliente ? "#ffffff" : "#eef2f7",
+                  cursor: allowEditCliente ? "text" : "not-allowed",
+                }}
+              />
+              {!allowEditCliente && (
+                <button
+                  type="button"
+                  className="mb-mini"
+                  onClick={() => {
+                    if (window.confirm("Tem certeza que deseja alterar o cliente desta medição? Isso limpará o endereço selecionado.")) {
+                      setAllowEditCliente(true);
+                      setClienteId("");
+                      setBuscaCliente("");
+                      setEnderecoId("");
+                      setBuscaEndereco("");
+                      setEnderecos([]);
+                    }
+                  }}
                 >
-                  <option value="">Selecione...</option>
-                  {produtos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nome}
-                    </option>
+                  Trocar
+                </button>
+              )}
+              {showSugCliente && clientesFiltrados.length > 0 && (
+                <div className="autocomplete-box">
+                  {clientesFiltrados.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="autocomplete-item"
+                      onMouseDown={() => {
+                        setClienteId(String(c.id));
+                        setBuscaCliente(c.nome);
+                        setEnderecoId("");
+                        setBuscaEndereco("");
+                        setEnderecos([]);
+                        carregarEnderecos(c.id);
+                        setShowSugCliente(false);
+                      }}
+                    >
+                      <span style={{ display: "inline-flex", width: 20, marginRight: 6 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="8" r="4" fill="var(--accent-clientes)" />
+                          <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="var(--accent-clientes)" />
+                        </svg>
+                      </span>
+                      {c.nome}{c.cpf ? ` (${c.cpf})` : ""}
+                    </button>
                   ))}
-                </select>
-
-                {/* botão opcional pra testar modo múltiplo */}
-                <button
-                  type="button"
-                  className="mb-mini"
-                  onClick={() => {
-                    setModoMultiplo(true);
-                    setProdutoIds(produtoId ? [String(produtoId)] : []);
-                    setProdutoId("");
-                  }}
-                >
-                  Tenho mais de um produto
-                </button>
-              </div>
-            ) : (
-              <div className="mb-field">
-                <label>Produtos agendados (selecione 1 ou mais)</label>
-                <div className="mb-multi">
-                  {produtos.map((p) => {
-                    const checked = produtoIds.includes(String(p.id));
-                    return (
-                      <label key={p.id} className={`mb-check ${checked ? "is-on" : ""}`}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleProdutoMultiplo(p.id)}
-                        />
-                        <span>{p.nome}</span>
-                      </label>
-                    );
-                  })}
                 </div>
-
-                <button
-                  type="button"
-                  className="mb-mini"
-                  onClick={() => {
-                    setModoMultiplo(false);
-                    setProdutoId(produtoIds[0] || "");
-                    setProdutoIds([]);
-                  }}
-                >
-                  Voltar para produto único
-                </button>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="mb-field">
               <label>Data & Hora</label>
@@ -335,28 +365,280 @@ export default function EditarMedicao() {
                 required
               />
             </div>
+          </div>
 
-            {/* ✅ ALTURA / LARGURA */}
-            <div className="mb-field">
-              <label>Altura (m)</label>
-              <input
-                className="mb-input"
-                type="text"
-                placeholder="Ex: 1.50"
-                value={altura}
-                onChange={(e) => setAltura(e.target.value)}
-              />
+          <div className="mb-field">
+            <label>Endereço</label>
+            <input
+              className="mb-input"
+              placeholder={!clienteId ? "Selecione um cliente primeiro..." : "Digite logradouro, bairro ou cidade..."}
+              value={buscaEndereco}
+              disabled={!clienteId}
+              onChange={(e) => {
+                const v = e.target.value;
+                setBuscaEndereco(v);
+                setShowSugEndereco(true);
+              }}
+              onFocus={() => setShowSugEndereco(true)}
+              required
+            />
+            {clienteId && showSugEndereco && enderecosFiltrados.length > 0 && (
+              <div className="autocomplete-box">
+                {enderecosFiltrados.map((e) => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    className="autocomplete-item"
+                    onMouseDown={() => {
+                      setEnderecoId(String(e.id));
+                      setBuscaEndereco(`${e.logradouro}, ${e.bairro} — ${e.cidade}`);
+                      setShowSugEndereco(false);
+                    }}
+                  >
+                    <span style={{ display: "inline-flex", width: 20, marginRight: 6 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2C8.686 2 6 4.686 6 8c0 5.25 6 12 6 12s6-6.75 6-12c0-3.314-2.686-6-6-6zm0 8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="var(--accent-pink)" />
+                      </svg>
+                    </span>
+                    {e.logradouro}, {e.bairro} — {e.cidade}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mb-workpanel">
+            <div>
+              <div className="mb-field">
+                <label>Produtos (opcional)</label>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr auto", gap: 8 }}>
+                  <input
+                    className="mb-input"
+                    placeholder="Digite para buscar produto..."
+                    value={buscaProduto}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setBuscaProduto(v);
+                      setShowSugProduto(true);
+                    }}
+                    onFocus={() => setShowSugProduto(true)}
+                  />
+                  {showSugProduto && produtosFiltrados.length > 0 && (
+                    <div className="autocomplete-box">
+                      {produtosFiltrados.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className="autocomplete-item"
+                          onMouseDown={() => {
+                            setProdutoSelecionadoId(String(p.id));
+                            setBuscaProduto(p.nome);
+                            setShowSugProduto(false);
+                            setQuantidade("1");
+                          }}
+                        >
+                          <span style={{ display: "inline-flex", width: 20, marginRight: 6 }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                              <path d="M3 7l9-5 9 5v10l-9 5-9-5V7z" fill="var(--accent-produtos)" />
+                            </svg>
+                          </span>
+                          {p.nome}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <input
+                    className="mb-input"
+                    type="number"
+                    min="1"
+                    placeholder="Qtd."
+                    value={quantidade}
+                    onChange={(e) => setQuantidade(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.preventDefault();
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="mb-mini"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      adicionarProduto();
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {Array.isArray(produtosSelecionados) && produtosSelecionados.length > 0 && (
+                <>
+                  <div className={`mb-items-box ${isItemsExpanded ? "expanded" : "collapsed"}`}>
+                    <div className="mb-items-head">
+                      <span>Itens adicionados</span>
+                      <span>{produtosSelecionados.length}</span>
+                    </div>
+                    {produtosSelecionados.map((it) => (
+                      <div key={it.id} className="mb-item-row">
+                        <div className="mb-item-name">{it.nome || `Produto #${it.id}`}</div>
+                        <div className="mb-item-qty">Qtd: {it.quantidade}</div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            type="button"
+                            className="mb-item-remove"
+                            title="Editar dimensões"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditingItemId(it.id);
+                              setEditAltura(it.altura != null ? String(it.altura) : "");
+                              setEditLargura(it.largura != null ? String(it.largura) : "");
+                            }}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            type="button"
+                            className="mb-item-remove"
+                            title="Remover item"
+                            onClick={() =>
+                              setProdutosSelecionados((prev) =>
+                                prev.filter((x) => Number(x.id) !== Number(it.id))
+                              )
+                            }
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {produtosSelecionados.length > 2 && (
+                    <button
+                      type="button"
+                      className="mb-items-toggle"
+                      onClick={() => setIsItemsExpanded(!isItemsExpanded)}
+                    >
+                      {isItemsExpanded ? "Ver menos" : "Ver tudo"}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
 
-            <div className="mb-field">
-              <label>Largura (m)</label>
-              <input
-                className="mb-input"
-                type="text"
-                placeholder="Ex: 2.00"
-                value={largura}
-                onChange={(e) => setLargura(e.target.value)}
-              />
+            <div>
+              {editingItemId != null && (
+                <div className="mb-item-edit">
+                  <div className="mb-field">
+                    <label>Altura (m)</label>
+                    <input
+                      className="mb-input"
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 1.20"
+                      value={editAltura}
+                      onChange={(e) => setEditAltura(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") e.preventDefault();
+                        if (
+                          e.key === "ArrowUp" ||
+                          e.key === "ArrowDown" ||
+                          e.key === "PageUp" ||
+                          e.key === "PageDown"
+                        ) {
+                          e.preventDefault();
+                          const delta =
+                            e.key === "ArrowUp"
+                              ? 0.01
+                              : e.key === "ArrowDown"
+                              ? -0.01
+                              : e.key === "PageUp"
+                              ? 0.1
+                              : -0.1;
+                          const cur = parseFloat(String(editAltura).replace(",", "."));
+                          const base = Number.isNaN(cur) ? 0 : cur;
+                          const next = (base + delta).toFixed(2);
+                          setEditAltura(next);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="mb-field">
+                    <label>Largura (m)</label>
+                    <input
+                      className="mb-input"
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 2.10"
+                      value={editLargura}
+                      onChange={(e) => setEditLargura(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") e.preventDefault();
+                        if (
+                          e.key === "ArrowUp" ||
+                          e.key === "ArrowDown" ||
+                          e.key === "PageUp" ||
+                          e.key === "PageDown"
+                        ) {
+                          e.preventDefault();
+                          const delta =
+                            e.key === "ArrowUp"
+                              ? 0.01
+                              : e.key === "ArrowDown"
+                              ? -0.01
+                              : e.key === "PageUp"
+                              ? 0.1
+                              : -0.1;
+                          const cur = parseFloat(String(editLargura).replace(",", "."));
+                          const base = Number.isNaN(cur) ? 0 : cur;
+                          const next = (base + delta).toFixed(2);
+                          setEditLargura(next);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="mb-actions">
+                    <button
+                      type="button"
+                      className="mb-btn-primary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const a =
+                          editAltura.trim() === "" ? null : Number(editAltura.replace(",", "."));
+                        const l =
+                          editLargura.trim() === "" ? null : Number(editLargura.replace(",", "."));
+                        setProdutosSelecionados((prev) =>
+                          prev.map((x) =>
+                            Number(x.id) === Number(editingItemId) ? { ...x, altura: a, largura: l } : x
+                          )
+                        );
+                        setEditingItemId(null);
+                        setEditAltura("");
+                        setEditLargura("");
+                      }}
+                    >
+                      Salvar Dimensões
+                    </button>
+                    <button
+                      type="button"
+                      className="mb-btn-ghost"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setEditingItemId(null);
+                        setEditAltura("");
+                        setEditLargura("");
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -370,7 +652,7 @@ export default function EditarMedicao() {
             />
           </div>
 
-          <div className="mb-actions">
+          <div className="mb-actions center">
             <button className="mb-btn-primary" type="submit" disabled={loading}>
               {loading ? "Salvando..." : "Salvar Alterações"}
             </button>
@@ -402,11 +684,4 @@ function formatToDateTimeLocal(value) {
   const hh = pad(d.getHours());
   const mi = pad(d.getMinutes());
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-function calcArea(altura, largura) {
-  const a = Number(String(altura || "").replace(",", "."));
-  const l = Number(String(largura || "").replace(",", "."));
-  if (!a || !l || isNaN(a) || isNaN(l)) return "";
-  return (a * l).toFixed(2);
 }

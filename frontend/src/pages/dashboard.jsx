@@ -16,7 +16,14 @@ export default function Dashboard() {
         setMedicoes(m.data || []);
       } catch (err) {
         console.error("Erro ao carregar dashboard:", err);
-        setErro("Não foi possível carregar as informações do dashboard.");
+        const status = err?.response?.status;
+        const msg =
+          status === 401 || status === 403
+            ? "Sessão expirada ou não autenticada. Faça login novamente."
+            : status
+            ? `Falha ao carregar (${status}).`
+            : "Falha de rede ao carregar o dashboard.";
+        setErro(msg);
       }
     }
     carregar();

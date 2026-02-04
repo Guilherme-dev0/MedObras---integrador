@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import "../styles/medicoes.css";
+import "../styles/medicaoForm.css";
 
 export default function Medicoes() {
   const [medicoes, setMedicoes] = useState([]);
@@ -10,9 +11,10 @@ export default function Medicoes() {
 
   const [modalAberto, setModalAberto] = useState(false);
   const [medicaoSelecionada, setMedicaoSelecionada] = useState(null);
-  const [altura, setAltura] = useState("");
-  const [largura, setLargura] = useState("");
-  const [observacao, setObservacao] = useState("");
+  const [itemEditId, setItemEditId] = useState(null);
+  const [itemAltura, setItemAltura] = useState("");
+  const [itemLargura, setItemLargura] = useState("");
+  const [itensEstado, setItensEstado] = useState({});
 
   useEffect(() => {
     carregar();
@@ -40,18 +42,46 @@ export default function Medicoes() {
 
   function abrirModal(m) {
     setMedicaoSelecionada(m);
-    setAltura("");
-    setLargura("");
-    setObservacao("");
+    setItemEditId(null);
+    setItemAltura("");
+    setItemLargura("");
+    const itens = Array.isArray(m?.produtosSelecionados) && m.produtosSelecionados.length > 0
+      ? m.produtosSelecionados
+      : (m?.produto ? [{ id: m.produto.id, nome: m.produto.nome, quantidade: 1 }] : []);
+    const estadoInicial = {};
+    itens.forEach((it) => {
+      estadoInicial[it.id] = {
+        altura: it.altura != null ? Number(it.altura) : 0,
+        largura: it.largura != null ? Number(it.largura) : 0,
+      };
+    });
+    setItensEstado(estadoInicial);
     setModalAberto(true);
   }
 
   async function concluirMedicao() {
     try {
+      const origemItens = Array.isArray(medicaoSelecionada?.produtosSelecionados) && medicaoSelecionada.produtosSelecionados.length > 0
+        ? medicaoSelecionada.produtosSelecionados
+        : (medicaoSelecionada?.produto ? [{ id: medicaoSelecionada.produto.id, nome: medicaoSelecionada.produto.nome, quantidade: 1 }] : []);
+      const todosConcluidos = origemItens.length === 0 ? true : origemItens.every((it) => {
+        const a = Number(itensEstado[it.id]?.altura ?? it.altura ?? 0);
+        const l = Number(itensEstado[it.id]?.largura ?? it.largura ?? 0);
+        return a > 0 && l > 0;
+      });
+      if (!todosConcluidos) {
+        alert("Preencha as dimensões de todos os produtos para finalizar.");
+        return;
+      }
+      const payloadProdutos = origemItens.map((it) => ({
+        id: it.id,
+        nome: it.nome,
+        quantidade: Number(it.quantidade || 1),
+        altura: Number((itensEstado[it.id]?.altura ?? it.altura ?? 0)),
+        largura: Number((itensEstado[it.id]?.largura ?? it.largura ?? 0)),
+      }));
       await api.put(`/medicoes/${medicaoSelecionada.id}/concluir`, {
-        altura,
-        largura,
-        observacao,
+        produtosSelecionados: payloadProdutos,
       });
 
       setModalAberto(false);
@@ -125,21 +155,21 @@ export default function Medicoes() {
       <div className="filters-bar">
         <div className="filtros">
           <button
-            className={filtro === "todas" ? "ativo" : ""}
+            className={`filtro-btn ${filtro === "todas" ? "ativo" : ""}`}
             onClick={() => setFiltro("todas")}
           >
             Todas
           </button>
 
           <button
-            className={filtro === "pendentes" ? "ativo" : ""}
+            className={`filtro-btn ${filtro === "pendentes" ? "ativo" : ""}`}
             onClick={() => setFiltro("pendentes")}
           >
             Pendentes
           </button>
 
           <button
-            className={filtro === "concluidas" ? "ativo" : ""}
+            className={`filtro-btn ${filtro === "concluidas" ? "ativo" : ""}`}
             onClick={() => setFiltro("concluidas")}
           >
             Concluídas
@@ -231,34 +261,98 @@ export default function Medicoes() {
       {modalAberto && (
         <div className="modal-overlay">
           <div className="modal">
-            <h3>Concluir Medição</h3>
-
-            <label>Altura (m)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={altura}
-              onChange={(e) => setAltura(e.target.value)}
-            />
-
-            <label>Largura (m)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={largura}
-              onChange={(e) => setLargura(e.target.value)}
-            />
-
-            <label>Observação</label>
-            <textarea
-              value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-            />
+            <div className="modal-title">Concluir Medição</div>
+            <div className="modal-subtitle">{medicaoSelecionada?.cliente?.nome || "-"}</div>
+            <div className="modal-items">
+              {(() => {
+                const itens = Array.isArray(medicaoSelecionada?.produtosSelecionados) && medicaoSelecionada.produtosSelecionados.length > 0
+                  ? medicaoSelecionada.produtosSelecionados
+                  : (medicaoSelecionada?.produto ? [{ id: medicaoSelecionada.produto.id, nome: medicaoSelecionada.produto.nome, quantidade: 1 }] : []);
+                return itens.map((it) => {
+                  const a = Number(itensEstado[it.id]?.altura ?? it.altura ?? 0);
+                  const l = Number(itensEstado[it.id]?.largura ?? it.largura ?? 0);
+                  const ok = a > 0 && l > 0;
+                  return (
+                    <div key={it.id} className="modal-item-card">
+                      <div className="modal-item-head">
+                        <span className="modal-item-name">{it.nome || `Produto #${it.id}`}</span>
+                        <div className="modal-item-right">
+                          <span className={`modal-item-status ${ok ? "ok" : "pendente"}`}>{ok ? "✅" : "⏳"}</span>
+                          <button
+                            className="btn-outline"
+                            onClick={() => {
+                              setItemEditId(it.id);
+                              setItemAltura(String(itensEstado[it.id]?.altura ?? it.altura ?? ""));
+                              setItemLargura(String(itensEstado[it.id]?.largura ?? it.largura ?? ""));
+                            }}
+                          >
+                            {ok ? "Editar" : "Concluir"}
+                          </button>
+                        </div>
+                      </div>
+                      {itemEditId === it.id && (
+                        <div className="modal-item-edit">
+                          <div className="modal-item-grid">
+                            <div>
+                              <label>Altura (m)</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={itemAltura}
+                                onChange={(e) => setItemAltura(e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <label>Largura (m)</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={itemLargura}
+                                onChange={(e) => setItemLargura(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <div className="modal-item-confirm">
+                            <button
+                              className="btn-primary"
+                              onClick={() => {
+                                setItensEstado((prev) => ({
+                                  ...prev,
+                                  [it.id]: {
+                                    altura: Number(itemAltura),
+                                    largura: Number(itemLargura),
+                                  },
+                                }));
+                                setItemEditId(null);
+                                setItemAltura("");
+                                setItemLargura("");
+                              }}
+                            >
+                              Confirmar Item
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
 
             <div className="modal-actions">
-              <button className="btn-primary" onClick={concluirMedicao}>
-                Salvar
-              </button>
+              {(() => {
+                const itens = Object.values(itensEstado);
+                const todosConcluidos = itens.length === 0 ? true : itens.every((x) => Number(x.altura) > 0 && Number(x.largura) > 0);
+                return (
+                  <button
+                    className={`btn-finalizar ${todosConcluidos ? "habilitado" : "desabilitado"}`}
+                    onClick={concluirMedicao}
+                    disabled={!todosConcluidos}
+                  >
+                    {todosConcluidos ? "Finalizar Medição" : "Preencha as dimensões de todos os produtos para finalizar."}
+                  </button>
+                );
+              })()}
 
               <button className="btn-cancel" onClick={() => setModalAberto(false)}>
                 Cancelar

@@ -11,13 +11,24 @@ export default function AgendarMedicao() {
 
   const [clienteId, setClienteId] = useState("");
   const [enderecoId, setEnderecoId] = useState("");
-  const [produtoId, setProdutoId] = useState("");
+  // múltiplos produtos via JSON
+  const [produtosSelecionados, setProdutosSelecionados] = useState([]);
+  const [produtoSelecionadoId, setProdutoSelecionadoId] = useState("");
+  const [quantidade, setQuantidade] = useState("");
 
   const [dataAgendada, setDataAgendada] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [isItemsExpanded, setIsItemsExpanded] = useState(false);
 
   const [buscaCliente, setBuscaCliente] = useState("");
   const [showSugestoes, setShowSugestoes] = useState(false);
+  const [buscaEndereco, setBuscaEndereco] = useState("");
+  const [showSugEnderecos, setShowSugEnderecos] = useState(false);
+  const [buscaProduto, setBuscaProduto] = useState("");
+  const [showSugProduto, setShowSugProduto] = useState(false);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editAltura, setEditAltura] = useState("");
+  const [editLargura, setEditLargura] = useState("");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -103,6 +114,28 @@ export default function AgendarMedicao() {
       .slice(0, 6);
   }, [buscaCliente, clientes]);
 
+  function normalize(s) {
+    return String(s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  }
+
+  const enderecosFiltrados = useMemo(() => {
+    const termo = normalize(buscaEndereco);
+    if (!termo) return enderecos;
+    return enderecos.filter((e) => {
+      const txt = normalize(`${e.logradouro} ${e.bairro} ${e.cidade}`);
+      return txt.includes(termo);
+    });
+  }, [enderecos, buscaEndereco]);
+
+  const produtosFiltrados = useMemo(() => {
+    const termo = normalize(buscaProduto);
+    if (!termo) return produtos;
+    return produtos.filter((p) => normalize(p.nome).includes(termo));
+  }, [produtos, buscaProduto]);
+
   function selecionarCliente(id, nome) {
     setClienteId(String(id));
     setBuscaCliente(nome);
@@ -114,9 +147,33 @@ export default function AgendarMedicao() {
     setShowSugestoes(false);
   }
 
+  function adicionarProduto() {
+    const idNum = Number(produtoSelecionadoId);
+    const qtdNum = Number(quantidade);
+    if (!idNum || isNaN(qtdNum) || qtdNum <= 0) return;
+    const prod = produtos.find((p) => Number(p.id) === idNum);
+    const item = {
+      id: idNum,
+      nome: prod?.nome || "",
+      quantidade: qtdNum,
+    };
+    setProdutosSelecionados((prev) => {
+      const idx = prev.findIndex((x) => Number(x.id) === idNum);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], quantidade: qtdNum };
+        return next;
+      }
+      return [...prev, item];
+    });
+    setProdutoSelecionadoId("");
+    setQuantidade("");
+  }
+
   async function salvar(e) {
     e.preventDefault();
     setErro("");
+    console.log("Form disparado por:", e.nativeEvent?.submitter);
 
     if (!clienteId || !enderecoId || !dataAgendada) {
       return setErro("Cliente, endereço e data/hora são obrigatórios.");
@@ -127,7 +184,9 @@ export default function AgendarMedicao() {
       await api.post("/medicoes", {
         clienteId: Number(clienteId),
         enderecoId: Number(enderecoId),
-        produtoId: produtoId ? Number(produtoId) : undefined,
+        produtosSelecionados: Array.isArray(produtosSelecionados)
+          ? produtosSelecionados
+          : [],
         dataAgendada,
         descricao,
       });
@@ -153,185 +212,379 @@ export default function AgendarMedicao() {
   }, [clientes, clienteId, buscaCliente]);
 
   return (
-    <div className="form-container">
-      <div className="form-card pro">
-        {/* HEADER */}
-        <div className="form-header">
-          <div>
-            <h2>Agendar Medição</h2>
-            <p className="form-subtitle">
-              Selecione o cliente, o endereço e defina a data/hora da visita.
-            </p>
-          </div>
-
-          <div className="form-header-actions">
-            <Link to="/medicoes" className="btn-ghost">
-              Voltar
-            </Link>
+    <div className="page-container mb-page">
+      <div className="mb-header">
+        <div>
+          <h2 className="page-title mb-title">Agendar Medição</h2>
+          <div className="mb-pill">
+            Selecione o cliente, o endereço e defina a data/hora da visita.
           </div>
         </div>
+        <button
+          type="button"
+          className="mb-back"
+          title="Voltar"
+          onClick={() => (window.location.href = "/medicoes")}
+        >
+          ←
+        </button>
+      </div>
 
-        {erro && <div className="alert-error">{erro}</div>}
+      <div className="mb-cards">
+        <div className="mb-card">
+          <div className="mb-card-label">Cliente selecionado</div>
+          <div className="mb-card-value">
+            {clienteSelecionado ? clienteSelecionado.nome : "Escolha um cliente para continuar"}
+          </div>
+          <div className="mb-card-sub">Atualize abaixo</div>
+        </div>
+        <div className="mb-card">
+          <div className="mb-card-label">Endereços disponíveis</div>
+          <div className="mb-card-value">{clienteId ? enderecos.length : "Selecione um cliente"}</div>
+          <div className="mb-card-sub">Carregados para este cliente</div>
+        </div>
+      </div>
+
+      <div className="mb-form-card">
+        {erro && <div className="mb-alert">{erro}</div>}
 
         <form onSubmit={salvar}>
-          {/* BUSCAR CLIENTE */}
-          <div className="field">
-            <label>Buscar cliente</label>
-            <input
-              className="search-input"
-              placeholder="Digite nome, telefone ou CPF..."
-              value={buscaCliente}
-              onChange={(e) => {
-                const v = e.target.value;
-                setBuscaCliente(v);
-                buscarClientes(v);
-              }}
-              onFocus={() => {
-                if (buscaCliente.trim().length > 0 && clientes.length > 0) {
-                  setShowSugestoes(true);
-                }
-              }}
-              onBlur={() => {
-                setTimeout(() => setShowSugestoes(false), 120);
-              }}
-            />
-
-            {showSugestoes && clientesSugeridos.length > 0 && (
-              <div className="autocomplete-box">
-                {clientesSugeridos.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className="autocomplete-item"
-                    onMouseDown={() => selecionarCliente(c.id, c.nome)}
-                  >
-                    <span style={{ marginRight: 8 }}>👤</span>
-                    <span>{c.nome}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* GRID */}
-          <div className="form-grid">
-            {/* CLIENTE */}
-            <div className="field">
+          <div className="mb-row-two">
+            <div className="mb-field">
               <label>Cliente</label>
-              <select
-                value={clienteId}
+              <input
+                className="mb-input"
+                placeholder="Digite nome, telefone ou CPF..."
+                value={buscaCliente}
                 onChange={(e) => {
-                  const novoClienteId = e.target.value;
-                  setClienteId(novoClienteId);
-                  setEnderecoId("");
-                  setEnderecos([]);
-                  setErro("");
-                  if (novoClienteId) carregarEnderecos(novoClienteId);
+                  const v = e.target.value;
+                  setBuscaCliente(v);
+                  buscarClientes(v);
+                  setShowSugestoes(true);
                 }}
+                onFocus={() => setShowSugestoes(true)}
                 required
-              >
-                <option value="">Selecione um cliente...</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome} — {c.telefone}
-                  </option>
-                ))}
-              </select>
-
-              {clienteSelecionado && (
-                <div className="helper">
-                  Cliente selecionado: <strong>{clienteSelecionado.nome}</strong>
+              />
+              {showSugestoes && clientesSugeridos.length > 0 && (
+                <div className="autocomplete-box">
+                  {clientesSugeridos.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="autocomplete-item"
+                      onMouseDown={() => selecionarCliente(c.id, c.nome)}
+                    >
+                      <span style={{ display: "inline-flex", width: 20, marginRight: 6 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="8" r="4" fill="var(--accent-clientes)" />
+                          <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="var(--accent-clientes)" />
+                        </svg>
+                      </span>
+                      {c.nome}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* ENDEREÇO */}
-            <div className="field">
-              <div className="label-row">
-                <label>Endereço</label>
-                {clienteId && (
-                  <Link
-                    to="/enderecos"
-                    className="link-action"
-                    title="Cadastrar/gerenciar endereços"
-                  >
-                    + Cadastrar endereço
-                  </Link>
-                )}
-              </div>
-
-              <select
-                value={enderecoId}
-                onChange={(e) => setEnderecoId(e.target.value)}
-                required
-                disabled={!clienteId}
-              >
-                <option value="">
-                  {!clienteId ? "Selecione um cliente primeiro..." : "Selecione..."}
-                </option>
-
-                {enderecos.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.logradouro}, {e.bairro} — {e.cidade} ({e.cep})
-                  </option>
-                ))}
-              </select>
-
-              {clienteId && !enderecosLoading && enderecos.length === 0 && (
-                <div className="helper warn">
-                  Este cliente não possui endereços cadastrados. Por favor, cadastre um endereço antes de prosseguir com o agendamento.
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="form-grid">
-            {/* PRODUTO */}
-            <div className="field">
-              <label>Produto (opcional)</label>
-              <select
-                value={produtoId}
-                onChange={(e) => setProdutoId(e.target.value)}
-              >
-                <option value="">Selecione...</option>
-                {produtos.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* DATA */}
-            <div className="field">
+            <div className="mb-field">
               <label>Data & Hora</label>
               <input
+                className="mb-input"
                 type="datetime-local"
                 value={dataAgendada}
                 onChange={(e) => setDataAgendada(e.target.value)}
                 min={new Date().toISOString().slice(0, 16)}
                 required
               />
-              <div className="helper">
-                Dica: agende com antecedência para evitar conflitos.
-              </div>
             </div>
           </div>
 
-          {/* OBS */}
-          <div className="field">
+          <div className="mb-field">
+            <label>Endereço</label>
+            <input
+              className="mb-input"
+              placeholder={!clienteId ? "Selecione um cliente primeiro..." : "Digite logradouro, bairro ou cidade..."}
+              value={buscaEndereco}
+              onChange={(e) => {
+                const v = e.target.value;
+                setBuscaEndereco(v);
+                setShowSugEnderecos(true);
+              }}
+              onFocus={() => setShowSugEnderecos(true)}
+              disabled={!clienteId}
+              required
+            />
+            {clienteId && showSugEnderecos && enderecosFiltrados.length > 0 && (
+              <div className="autocomplete-box">
+                {enderecosFiltrados.map((e) => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    className="autocomplete-item"
+                    onMouseDown={() => {
+                      setEnderecoId(String(e.id));
+                      setBuscaEndereco(`${e.logradouro}, ${e.bairro} — ${e.cidade}`);
+                      setShowSugEnderecos(false);
+                    }}
+                  >
+                      <span style={{ display: "inline-flex", width: 20, marginRight: 6 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 2C8.686 2 6 4.686 6 8c0 5.25 6 12 6 12s6-6.75 6-12c0-3.314-2.686-6-6-6zm0 8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="var(--accent-pink)" />
+                        </svg>
+                      </span>
+                      {e.logradouro}, {e.bairro} — {e.cidade}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mb-workpanel">
+            <div>
+              <div className="mb-field">
+                <label>Produtos (opcional)</label>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr auto", gap: 8 }}>
+                  <input
+                    className="mb-input"
+                    placeholder="Digite para buscar produto..."
+                    value={buscaProduto}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setBuscaProduto(v);
+                      setShowSugProduto(true);
+                    }}
+                    onFocus={() => setShowSugProduto(true)}
+                  />
+                  {showSugProduto && produtosFiltrados.length > 0 && (
+                    <div className="autocomplete-box">
+                      {produtosFiltrados.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className="autocomplete-item"
+                          onMouseDown={() => {
+                            setProdutoSelecionadoId(String(p.id));
+                            setBuscaProduto(p.nome);
+                            setShowSugProduto(false);
+                          }}
+                        >
+                          <span style={{ display: "inline-flex", width: 20, marginRight: 6 }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                              <path d="M3 7l9-5 9 5v10l-9 5-9-5V7z" fill="var(--accent-produtos)" />
+                            </svg>
+                          </span>
+                          {p.nome}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    className="mb-input"
+                    type="number"
+                    min="1"
+                    placeholder="Qtd."
+                    value={quantidade}
+                    onChange={(e) => setQuantidade(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.preventDefault();
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="mb-mini"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      adicionarProduto();
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {Array.isArray(produtosSelecionados) && produtosSelecionados.length > 0 && (
+                <>
+                  <div className={`mb-items-box ${isItemsExpanded ? "expanded" : "collapsed"}`}>
+                    <div className="mb-items-head">
+                      <span>Itens adicionados</span>
+                      <span>{produtosSelecionados.length}</span>
+                    </div>
+                    {produtosSelecionados.map((it) => (
+                      <div key={it.id} className="mb-item-row">
+                        <div className="mb-item-name">{it.nome || `Produto #${it.id}`}</div>
+                        <div className="mb-item-qty">Qtd: {it.quantidade}</div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            type="button"
+                            className="mb-item-remove"
+                            title="Editar dimensões"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditingItemId(it.id);
+                              setEditAltura(it.altura != null ? String(it.altura) : "");
+                              setEditLargura(it.largura != null ? String(it.largura) : "");
+                            }}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            type="button"
+                            className="mb-item-remove"
+                            title="Remover item"
+                            onClick={() =>
+                              setProdutosSelecionados((prev) =>
+                                prev.filter((x) => Number(x.id) !== Number(it.id))
+                              )
+                            }
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {produtosSelecionados.length > 2 && (
+                    <button
+                      type="button"
+                      className="mb-items-toggle"
+                      onClick={() => setIsItemsExpanded(!isItemsExpanded)}
+                    >
+                      {isItemsExpanded ? "Ver menos" : "Ver tudo"}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div>
+              {editingItemId != null && (
+                <div className="mb-item-edit">
+                  <div className="mb-field">
+                    <label>Altura (m)</label>
+                    <input
+                      className="mb-input"
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 1.20"
+                      value={editAltura}
+                      onChange={(e) => setEditAltura(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") e.preventDefault();
+                        if (
+                          e.key === "ArrowUp" ||
+                          e.key === "ArrowDown" ||
+                          e.key === "PageUp" ||
+                          e.key === "PageDown"
+                        ) {
+                          e.preventDefault();
+                          const delta =
+                            e.key === "ArrowUp"
+                              ? 0.01
+                              : e.key === "ArrowDown"
+                              ? -0.01
+                              : e.key === "PageUp"
+                              ? 0.1
+                              : -0.1;
+                          const cur = parseFloat(String(editAltura).replace(",", "."));
+                          const base = Number.isNaN(cur) ? 0 : cur;
+                          const next = (base + delta).toFixed(2);
+                          setEditAltura(next);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="mb-field">
+                    <label>Largura (m)</label>
+                    <input
+                      className="mb-input"
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 2.10"
+                      value={editLargura}
+                      onChange={(e) => setEditLargura(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") e.preventDefault();
+                        if (
+                          e.key === "ArrowUp" ||
+                          e.key === "ArrowDown" ||
+                          e.key === "PageUp" ||
+                          e.key === "PageDown"
+                        ) {
+                          e.preventDefault();
+                          const delta =
+                            e.key === "ArrowUp"
+                              ? 0.01
+                              : e.key === "ArrowDown"
+                              ? -0.01
+                              : e.key === "PageUp"
+                              ? 0.1
+                              : -0.1;
+                          const cur = parseFloat(String(editLargura).replace(",", "."));
+                          const base = Number.isNaN(cur) ? 0 : cur;
+                          const next = (base + delta).toFixed(2);
+                          setEditLargura(next);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="mb-actions">
+                    <button
+                      type="button"
+                      className="mb-btn-primary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const a =
+                          editAltura.trim() === "" ? null : Number(editAltura.replace(",", "."));
+                        const l =
+                          editLargura.trim() === "" ? null : Number(editLargura.replace(",", "."));
+                        setProdutosSelecionados((prev) =>
+                          prev.map((x) =>
+                            Number(x.id) === Number(editingItemId) ? { ...x, altura: a, largura: l } : x
+                          )
+                        );
+                        setEditingItemId(null);
+                        setEditAltura("");
+                        setEditLargura("");
+                      }}
+                    >
+                      Salvar Dimensões
+                    </button>
+                    <button
+                      type="button"
+                      className="mb-btn-ghost"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setEditingItemId(null);
+                        setEditAltura("");
+                        setEditLargura("");
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mb-field">
             <label>Observação</label>
             <textarea
+              className="mb-input mb-textarea"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Ex: Ligar para o cliente antes • Janela da cozinha • Vidro fumê"
             />
           </div>
 
-          {/* FOOTER ACTIONS */}
-          <div className="form-actions">
+          <div className="mb-actions center">
             <button
-              className="btn-primary"
+              className="mb-btn-primary"
               type="submit"
               disabled={
                 loading ||
@@ -342,7 +595,7 @@ export default function AgendarMedicao() {
               {loading ? "Agendando..." : "Agendar Medição"}
             </button>
 
-            <Link to="/medicoes" className="btn-secondary">
+            <Link to="/medicoes" className="mb-btn-ghost">
               Cancelar
             </Link>
           </div>

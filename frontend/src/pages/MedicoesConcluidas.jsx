@@ -7,6 +7,11 @@ export default function MedicoesConcluidas() {
   const [busca, setBusca] = useState("");
   const [de, setDe] = useState("");
   const [ate, setAte] = useState("");
+  const [tooltipOpenId, setTooltipOpenId] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState(null); // { medicaoId, itemId, nome }
+  const [editAltura, setEditAltura] = useState("");
+  const [editLargura, setEditLargura] = useState("");
 
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,6 +53,29 @@ export default function MedicoesConcluidas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    function handleClickOutsideTooltip(e) {
+      if (!tooltipOpenId) return;
+      const closestTooltip = e.target.closest(".tooltip-box");
+      const closestBadge = e.target.closest(".inline-badge");
+      if (!closestTooltip && !closestBadge) {
+        setTooltipOpenId(null);
+      }
+    }
+    function handleKeydown(e) {
+      if (e.key === "Escape") {
+        setTooltipOpenId(null);
+        if (editOpen) setEditOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutsideTooltip);
+    document.addEventListener("keydown", handleKeydown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideTooltip);
+      document.removeEventListener("keydown", handleKeydown);
+    };
+  }, [tooltipOpenId, editOpen]);
+
   // fecha sugestões ao clicar fora
   useEffect(() => {
     function handleClickOutside(e) {
@@ -64,10 +92,17 @@ export default function MedicoesConcluidas() {
 
   const totalArea = useMemo(() => {
     return medicoes.reduce((acc, m) => {
-      const a = Number(m.altura);
-      const l = Number(m.largura);
-      if (!isNaN(a) && !isNaN(l) && a > 0 && l > 0) return acc + a * l;
-      return acc;
+      const itens = Array.isArray(m.produtosSelecionados) && m.produtosSelecionados.length > 0
+        ? m.produtosSelecionados
+        : [];
+      const soma = itens.reduce((s, it) => {
+        const a = Number(it.altura || 0);
+        const l = Number(it.largura || 0);
+        const q = Number(it.quantidade || 1);
+        if (a > 0 && l > 0 && q > 0) return s + a * l * q;
+        return s;
+      }, 0);
+      return acc + soma;
     }, 0);
   }, [medicoes]);
 
@@ -155,7 +190,6 @@ export default function MedicoesConcluidas() {
           className="btn-primary btn-sm"
           onClick={() => carregar()}
           disabled={loading}
-          title="Atualizar lista"
         >
           {loading ? "Atualizando..." : "Atualizar"}
         </button>
@@ -271,23 +305,38 @@ export default function MedicoesConcluidas() {
           <table className="list-table pro">
             <thead>
               <tr>
-                <th>Cliente</th>
-                <th>Endereço</th>
-                <th>Produto</th>
+                <th className="col-cliente">Cliente</th>
+                <th className="col-endereco">Endereço</th>
+                <th className="col-produtos">Produtos</th>
                 <th>Altura</th>
                 <th>Largura</th>
                 <th>Área</th>
-                <th>Obs</th>
+                <th className="col-obs">Obs</th>
                 <th>Data</th>
               </tr>
             </thead>
 
             <tbody>
               {medicoes.map((m) => {
+                const itensArea = Array.isArray(m.produtosSelecionados) && m.produtosSelecionados.length > 0
+                  ? m.produtosSelecionados
+                  : [];
+                const area = itensArea.length > 0
+                  ? itensArea.reduce((s, it) => {
+                      const a = Number(it.altura || 0);
+                      const l = Number(it.largura || 0);
+                      const q = Number(it.quantidade || 1);
+                      if (a > 0 && l > 0 && q > 0) return s + a * l * q;
+                      return s;
+                    }, 0)
+                  : null;
                 const altura = m.altura ? Number(m.altura) : null;
                 const largura = m.largura ? Number(m.largura) : null;
-                const area =
-                  altura && largura && altura > 0 && largura > 0 ? altura * largura : null;
+                const itens = Array.isArray(m.produtosSelecionados) && m.produtosSelecionados.length > 0
+                  ? m.produtosSelecionados
+                  : (m?.produto ? [{ id: m.produto.id, nome: m.produto.nome || "", quantidade: 1 }] : []);
+                const totalItens = itens.reduce((acc, it) => acc + Number(it.quantidade || 1), 0);
+                const obsTexto = m.observacao || m.descricao || "";
 
                 return (
                   <tr key={m.id}>
@@ -297,11 +346,70 @@ export default function MedicoesConcluidas() {
                         ? `${m.endereco.logradouro}, ${m.endereco.bairro} – ${m.endereco.cidade}`
                         : "-"}
                     </td>
-                    <td>{m.produto?.nome || "-"}</td>
+                    <td>
+                      {totalItens > 0 ? (
+                        <span
+                          className="inline-badge with-icon"
+                          onClick={() => setTooltipOpenId(tooltipOpenId === `p-${m.id}` ? null : `p-${m.id}`)}
+                          onMouseEnter={() => setTooltipOpenId(`p-${m.id}`)}
+                          onMouseLeave={() => setTooltipOpenId(null)}
+                          style={{ position: "relative", cursor: "pointer" }}
+                        >
+                          <span className="icon">📦</span>
+                          <span className="text">{totalItens} itens</span>
+                          {tooltipOpenId === `p-${m.id}` && (
+                            <div className="tooltip-box">
+                              {itens.map((it) => {
+                                return (
+                                  <button
+                                    key={it.id}
+                                    type="button"
+                                    className="tooltip-row button-like"
+                                    onClick={() => {
+                                      setEditTarget({ medicaoId: m.id, itemId: it.id, nome: it.nome || `Produto #${it.id}` });
+                                      setEditAltura(it.altura != null ? String(it.altura) : "");
+                                      setEditLargura(it.largura != null ? String(it.largura) : "");
+                                      setTooltipOpenId(null);
+                                      setEditOpen(true);
+                                    }}
+                                  >
+                                    <span className="tooltip-name">{it.nome || `Produto #${it.id}`}</span>
+                                    <span className="tooltip-qty">× {Number(it.quantidade || 1)}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                     <td>{altura ? altura.toFixed(2) : "-"}</td>
                     <td>{largura ? largura.toFixed(2) : "-"}</td>
                     <td>{area ? `${area.toFixed(2)} m²` : "-"}</td>
-                    <td className="obs-cell">{m.observacao || "-"}</td>
+                    <td className="obs-cell">
+                      {obsTexto ? (
+                        <span
+                          className="inline-badge with-icon"
+                          onClick={() => setTooltipOpenId(tooltipOpenId === `o-${m.id}` ? null : `o-${m.id}`)}
+                          onMouseEnter={() => setTooltipOpenId(`o-${m.id}`)}
+                          onMouseLeave={() => setTooltipOpenId(null)}
+                          style={{ position: "relative", cursor: "pointer" }}
+                        >
+                          <span className="icon">💬</span>
+                          {tooltipOpenId === `o-${m.id}` && (
+                            <div className="tooltip-box wide">
+                              <div className="tooltip-text">{obsTexto}</div>
+                            </div>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="inline-badge disabled">
+                          <span className="icon">💬</span>
+                        </span>
+                      )}
+                    </td>
                     <td>
                       {m.dataAgendada
                         ? new Date(m.dataAgendada).toLocaleDateString("pt-BR")
@@ -314,6 +422,98 @@ export default function MedicoesConcluidas() {
           </table>
         )}
       </div>
+
+      {editOpen && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-title">Editar Medição</div>
+            <div className="modal-subtitle">{editTarget?.nome || "-"}</div>
+            <div className="modal-item-edit">
+              <div className="modal-item-grid">
+                <div>
+                  <label>Altura (m)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editAltura}
+                    onChange={(e) => setEditAltura(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label>Largura (m)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editLargura}
+                    onChange={(e) => setEditLargura(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={() => setEditOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={async () => {
+                    try {
+                      const alturaNum = editAltura ? Number(editAltura) : null;
+                      const larguraNum = editLargura ? Number(editLargura) : null;
+                      const medicao = medicoes.find((x) => x.id === editTarget.medicaoId);
+                      if (!medicao) {
+                        setEditOpen(false);
+                        return;
+                      }
+                      const itens = Array.isArray(medicao.produtosSelecionados) && medicao.produtosSelecionados.length > 0
+                        ? medicao.produtosSelecionados
+                        : (medicao?.produto ? [{ id: medicao.produto.id, nome: medicao.produto.nome || "", quantidade: 1 }] : []);
+
+                      await api.put(`/medicoes/${medicao.id}`, {
+                        produtosSelecionados: itens.map((it) => ({
+                          id: it.id,
+                          nome: it.nome,
+                          quantidade: Number(it.quantidade || 1),
+                          altura: it.id === editTarget.itemId ? alturaNum : (it.altura != null ? Number(it.altura) : null),
+                          largura: it.id === editTarget.itemId ? larguraNum : (it.largura != null ? Number(it.largura) : null),
+                        })),
+                      });
+
+                      setMedicoes((prev) =>
+                        prev.map((x) =>
+                          x.id === medicao.id
+                            ? {
+                                ...x,
+                                produtosSelecionados: itens.map((it) =>
+                                  it.id === editTarget.itemId
+                                    ? {
+                                        ...it,
+                                        altura: alturaNum,
+                                        largura: larguraNum,
+                                      }
+                                    : it
+                                ),
+                              }
+                            : x
+                        )
+                      );
+
+                      setEditOpen(false);
+                    } catch {
+                      alert("Erro ao salvar edição.");
+                    }
+                  }}
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

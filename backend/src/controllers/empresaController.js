@@ -63,45 +63,50 @@ export const registerEmpresa = async (req, res) => {
 };
 
 export const loginEmpresa = async (req, res) => {
-  const { cnpj, senha, licenca } = req.body;
+  try {
+    const { cnpj, senha, licenca } = req.body;
 
-  if (!cnpj || !senha || !licenca) {
-    return res.status(400).json({ erro: "CNPJ, senha e licença são obrigatórios" });
-  }
-
-  //  buscar pelo cnpj limpo (porque você salva limpo)
-  const cnpjLimpo = cnpj.replace(/\D/g, "");
-
-  const empresa = await prisma.empresa.findUnique({
-    where: { cnpj: cnpjLimpo },
-  });
-
-  if (!empresa) {
-    return res.status(401).json({ erro: "Empresa não encontrada" });
-  }
-
-  if (empresa.licenca.trim() !== String(licenca).trim()) {
-    return res.status(401).json({ erro: "Licença incorreta" });
-  }
-
-  const senhaConfere = await bcrypt.compare(senha, empresa.senha);
-
-  if (!senhaConfere) {
-    return res.status(401).json({ erro: "Senha incorreta" });
-  }
-
-  const token = jwt.sign(
-    { id: empresa.id },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-
-  return res.json({ 
-    mensagem: "Login realizado com sucesso", 
-    token,
-    empresa: {
-      nome: empresa.nome,
-      email: empresa.email
+    if (!cnpj || !senha || !licenca) {
+      return res.status(400).json({ erro: "CNPJ, senha e licença são obrigatórios" });
     }
-  });
+
+    //  buscar pelo cnpj limpo (porque você salva limpo)
+    const cnpjLimpo = cnpj.replace(/\D/g, "");
+
+    const empresa = await prisma.empresa.findUnique({
+      where: { cnpj: cnpjLimpo },
+    });
+
+    if (!empresa) {
+      return res.status(401).json({ erro: "Empresa não encontrada" });
+    }
+
+    if (empresa.licenca.trim() !== String(licenca).trim()) {
+      return res.status(401).json({ erro: "Licença incorreta" });
+    }
+
+    const senhaConfere = await bcrypt.compare(senha, empresa.senha);
+
+    if (!senhaConfere) {
+      return res.status(401).json({ erro: "Senha incorreta" });
+    }
+
+    const token = jwt.sign(
+      { id: empresa.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    return res.json({ 
+      mensagem: "Login realizado com sucesso", 
+      token,
+      empresa: {
+        nome: empresa.nome,
+        email: empresa.email
+      }
+    });
+  } catch (error) {
+    console.error("Erro no login:", error);
+    return res.status(500).json({ erro: "Erro interno ao realizar login." });
+  }
 };

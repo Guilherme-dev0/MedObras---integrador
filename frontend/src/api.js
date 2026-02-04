@@ -1,6 +1,5 @@
 import axios from "axios"
-const baseURL = (import.meta.env && import.meta.env.VITE_API_URL) || "https://medobras-integrador.onrender.com"
-const api = axios.create({ baseURL })
+const api = axios.create({ baseURL: "/api" })
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token")
   if (token) config.headers.Authorization = `Bearer ${token}`

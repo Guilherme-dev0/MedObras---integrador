@@ -24,9 +24,8 @@ import Produtos from "./pages/produtos.jsx";
 import ProdutoNovo from "./pages/produtoNovo.jsx";
 import ProdutoEditar from "./pages/produtoEditar.jsx";
 import EsqueciSenha from "./pages/esqueciSenha.jsx";
-import ResetarSenha from "./pages/resetarSenha.jsx";
 import EsqueciLicenca from "./pages/esqueciLicenca.jsx";
-import RedefinirLicenca from "./pages/redefinirLicenca.jsx";
+import ResetarSenha from "./pages/resetarSenha.jsx";
 
 
 
@@ -39,9 +38,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha/>} />
+        <Route path="/esqueci-licenca" element={<EsqueciLicenca/>} />
         <Route path="/resetar-senha" element={<ResetarSenha />} />
-        <Route path="/esqueci-licenca" element={<EsqueciLicenca />} />
-        <Route path="/redefinir-licenca" element={<RedefinirLicenca />} />
 
         {/* ROTAS PROTEGIDAS */}
         <Route element={<ProtectedRoutes />}>

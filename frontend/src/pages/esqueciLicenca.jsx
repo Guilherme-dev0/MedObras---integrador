@@ -15,10 +15,13 @@ export default function EsqueciLicenca() {
     setEnviando(true);
 
     try {
+      // Endpoint corrigido: /auth/forgot-license (que o axios transforma em /api/auth/forgot-license)
       const res = await api.post("/auth/forgot-license", { email });
       const msg = res.data?.message || "Link gerado (Modo Acadêmico).";
       const resetLink = res.data?.resetLink;
+
       if (resetLink) {
+        console.log("LINK LICENÇA (FRONT):", resetLink);
         setLinkGerado(resetLink);
         setShowModal(true);
       } else {
@@ -42,43 +45,42 @@ export default function EsqueciLicenca() {
         <div className="login-card">
           <div className="login-header">
             <img src={logoMedobras} alt="logo" className="login-logo" />
-            <h1>Recuperar licença</h1>
+            <h1>Recuperar Licença</h1>
           </div>
 
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="login-field">
+              <label>E-mail cadastrado</label>
               <input
                 type="email"
-                placeholder="Digite seu e-mail"
+                placeholder="exemplo@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={enviando}
               />
             </div>
 
             <button className="login-button" disabled={enviando}>
-              {enviando ? "Enviando..." : "Enviar link"}
+              {enviando ? "Enviando..." : "Recuperar Licença"}
             </button>
-
-            <div className="login-footer">
-              <a href="/">Voltar para o login</a>
-            </div>
           </form>
+
+          <div className="login-footer">
+            <a href="/">Voltar para o Login</a>
+          </div>
         </div>
       </div>
 
-      <ConfirmModal
-        titulo="Link de Recuperação"
-        mensagem={
-          linkGerado
-            ? "Esta função serve para representar uma situação real de troca de licença. Clique em Redefinir agora ou cancelar:"
-            : ""
-        }
-        textoConfirmar="Redefinir Agora"
-        funcaoConfirmar={() => (window.location.href = linkGerado)}
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-      />
+      {showModal && (
+        <ConfirmModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onConfirm={() => setShowModal(false)}
+          title="Link Gerado (Modo Acadêmico)"
+          message={`Copie o link abaixo para redefinir sua licença:\n\n${linkGerado}`}
+        />
+      )}
     </>
   );
 }
